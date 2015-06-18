@@ -109,7 +109,7 @@ queries.findDocumentFragmentsWithContent = function(documentId, searchString) {
     index: 'interviews',
     type: 'fragment',
     body: {
-      "size": 2,
+      "size": 3,
       "query": {
         "bool": {
           "must": [

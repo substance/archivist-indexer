@@ -24,6 +24,18 @@ module.exports = {
             "split_on_case_change": "true",
             "preserve_original": "true",
             "split_on_numerics": "false"
+          },
+          "russian_stop": {
+            "type":       "stop",
+            "stopwords":  "_russian_" 
+          },
+          "russian_stemmer": {
+            "type":       "stemmer",
+            "language":   "russian"
+          },
+          'ru_stemming': {
+            'type': 'snowball',
+            'language': 'Russian'
           }
         },
         "char_filter": {
@@ -35,15 +47,23 @@ module.exports = {
         "analyzer": {
           "analyzer_ru": {
             "type": "custom",
-            "tokenizer": "nGram",
+            "tokenizer": "standard",
             "filter": ["stopwords_ru", "stop", "custom_word_delimiter", "lowercase", "russian_morphology", "english_morphology"],
             "char_filter": ["ru"]
           },
           "searcher_ru": {
             "type": "custom",
-            "tokenizer": "nGram",
+            "tokenizer": "standard",
             "filter": ["stopwords_ru", "stop", "custom_word_delimiter", "lowercase", "russian_morphology", "english_morphology"],
             "char_filter": ["ru"]
+          },
+          "russian": {
+            "tokenizer":  "standard",
+            "filter": [
+              "lowercase",
+              "russian_stop",
+              "russian_stemmer"
+            ]
           }
         },
         "tokenizer": {
@@ -76,7 +96,7 @@ module.exports = {
           "id": { "type": "string", "index" : "not_analyzed" },
           "type": { "type": "string", "index" : "not_analyzed" },
           "content": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian" },
-          //"position": { "type": "integer", "index": "not_analyzed" }
+          "position": { "type": "integer", "index": "not_analyzed" }
         }
       }
     }
