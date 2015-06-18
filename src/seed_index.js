@@ -7,8 +7,8 @@ var request = require('superagent');
 var _ = require('underscore');
 
 //var util = require('substance-util');
-//var LensArticle = require('lens-article');
-//var indexArticle = require('./index_article');
+var ArchivistInterview = require('../intrview');
+var indexInterview = require('./index_interview');
 
 var idx = 0;
 var count = 0;
@@ -24,9 +24,9 @@ function step(cb) {
 
   getJSON(url, function(err, json){
     if (err) return cb(err);
-    var article = LensArticle.fromSnapshot(JSON.parse(jsonData));
-    var client = new elasticsearch.Client(util.clone(config));
-    indexArticle(client, article).then(function() {
+    var interview = ArchivistInterview.fromSnapshot(json);
+    var client = new elasticsearch.Client(config);
+    indexInterview(client, interview).then(function() {
       client.close();
       count++;
       step(cb);
