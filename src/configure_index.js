@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 var elasticsearch = require('elasticsearch');
+var _ = require('underscore');
 var config = require('../config');
 var indexConfiguration = require('../src/index_configuration');
 
