@@ -29,10 +29,10 @@ function indexInterview(client, interview) {
     body: shortData
   };
   indexEntries.push(shortEntry);
-  console.log("#################");
-  console.log("Short Entry:");
-  console.log(shortEntry);
-  console.log("#################");
+  // console.log("#################");
+  // console.log("Short Entry:");
+  // console.log(shortEntry);
+  // console.log("#################");
   nodeIds.forEach(function(nodeId, pos) {
     var node = interview.get(nodeId);
     if (!node) {

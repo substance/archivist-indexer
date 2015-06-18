@@ -24,6 +24,7 @@ function step(cb) {
 
   getJSON(url, function(err, json){
     if (err) return cb(err);
+    console.log('Indexing interview %s...', url);
     var interview = new ArchivistInterview(json);
     var client = new elasticsearch.Client(_.clone(config));
     indexInterview(client, interview).then(function() {

@@ -1,5 +1,6 @@
 "use strict";
 
+var _ = require('underscore');
 var express = require('express');
 var app = express();
 var queries = require('./src/queries');
@@ -15,6 +16,14 @@ app.use(function(req, res, next) {
 // Full search (including fragments)
 
 app.get('/search', function (req, res) {
+  // Test: if query object is empty, then we trying to fetch results for "Moscow"
+  if(_.isEmpty(req.query)) {
+    req.query = {
+      searchQuery: JSON.stringify({
+        searchStr: 'Москва'
+      })
+    }
+  }
   queries.findDocumentsWithContentAdvanced(req.query, function(error, result) {
     if (error) {
       res.send('500', error.message);
@@ -25,6 +34,13 @@ app.get('/search', function (req, res) {
 });
 
 app.get('/search/document/', function (req, res) {
+  // Test: if query object is empty, then we trying to fetch results for "Moscow" and "554e7662f10c3c030049f7ee" document
+  if(_.isEmpty(req.query)) {
+    req.query = {
+      searchString: 'Москва',
+      documentId: '554e7662f10c3c030049f7ee'
+    }
+  }
   queries.getDocumentPreview({
     documentId: req.query.documentId,
     searchString: req.query.searchString
