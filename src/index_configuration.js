@@ -65,7 +65,7 @@ module.exports = {
          "title": { "type": "string", "index" : "analyzed", "analyzer": "standard" },
          // The rest are facets which are used for strict match queries or filtering only
          "published_on": { "type": "string", "index" : "not_analyzed"},
-         "interview_date": { "type": "string", "index" : "not_analyzed"}
+         "interview_date": { "type": "string", "index" : "not_analyzed"},
          "interview_location": { "type": "string", "index" : "not_analyzed"}
 
        }
