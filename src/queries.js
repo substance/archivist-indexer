@@ -57,6 +57,10 @@ queries.getDocumentPreview = function(query, cb) {
   var documentId = query.documentId;
   var searchString = query.searchString;
 
+  // Pagination
+  var size = query.size || 2;
+  var from = query.from || 0;
+
   // create a result that contains
   // - fragments
   // - TODO: all figures
@@ -75,7 +79,7 @@ queries.getDocumentPreview = function(query, cb) {
   queries.getDocumentMetaById(documentId)
   .then(function(data) {
     _documentMeta = data._source;
-    return queries.findDocumentFragmentsWithContent(documentId, searchString);
+    return queries.findDocumentFragmentsWithContent(documentId, searchString, from, size);
   })
   .then(function(data) {
     _fragments = [];
@@ -103,13 +107,15 @@ queries.getDocumentPreview = function(query, cb) {
   });
 };
 
-queries.findDocumentFragmentsWithContent = function(documentId, searchString) {
+queries.findDocumentFragmentsWithContent = function(documentId, searchString, from, size) {
   console.log("Asking for fragment in %s containing %s", documentId, searchString);
+
   return client.search({
     index: 'interviews',
     type: 'fragment',
     body: {
-      "size": 3,
+      "size": size,
+      "from": from,
       "query": {
         "bool": {
           "must": [

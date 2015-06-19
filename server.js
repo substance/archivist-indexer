@@ -43,7 +43,9 @@ app.get('/search/document/', function (req, res) {
   }
   queries.getDocumentPreview({
     documentId: req.query.documentId,
-    searchString: req.query.searchString
+    searchString: req.query.searchString,
+    from: req.query.from,
+    size: req.query.size
   }, function(error, result) {
     if (error) {
       res.send('500', error.message);

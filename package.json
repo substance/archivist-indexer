@@ -17,5 +17,9 @@
   "version": "0.0.1",
   "engines": {
     "node": "0.10.x"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node scripts/configure_index.js; scripts/seed_index.js"
   }
 }
