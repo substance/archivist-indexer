@@ -6,7 +6,7 @@ var config = require('../config');
 var indexConfiguration = require('../src/index_configuration');
 
 var configureIndex = function(cb) {
-  var client = new elasticsearch.Client(config);
+  var client = new elasticsearch.Client(_.clone(config));
   client.indices.delete({
     index: ["*"],
     ignore: [404]
@@ -14,11 +14,10 @@ var configureIndex = function(cb) {
     console.info('Configuring index...');
     return client.indices.create(indexConfiguration);
   }).error(function(error, resp) {
-    console.error(error, resp);
+    console.error(error);
     client.close();
     cb(error);
-  })
-  .done(function() {
+  }).done(function() {
     client.close();
     cb(null);
   });

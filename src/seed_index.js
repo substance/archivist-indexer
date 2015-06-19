@@ -31,6 +31,10 @@ function step(cb) {
       client.close();
       count++;
       step(cb);
+    }).error(function(error, resp) {
+      console.error(error);
+      client.close();
+      cb(error);
     });
   });
 }

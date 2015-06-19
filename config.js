@@ -1,6 +1,6 @@
 var config = {
 	// Elastic Search host
-  host: 'http://localhost:9200',
+  host: 'http://127.0.0.1:9200',
   // Archivist host
   archive: 'http://ost.d4s.io'
 };
