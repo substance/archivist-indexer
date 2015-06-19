@@ -20,6 +20,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "seed": "node scripts/configure_index.js; scripts/seed_index.js"
+    "seed": "node scripts/configure_index.js; scripts/seed_index.js",
+    "postinstall": "node scripts/configure_index.js; scripts/seed_index.js"
   }
 }
