@@ -80,7 +80,7 @@ queries.getDocumentPreview = function(query, cb) {
   queries.getDocumentMetaById(documentId)
   .then(function(data) {
     _documentMeta = data._source;
-    return queries.findDocumentFragmentsWithContent(documentId, searchString, from, size);
+    return queries.findDocumentFragmentsWithContent(documentId, searchString, from, size, type);
   })
   .then(function(data) {
     _fragments = [];
@@ -108,7 +108,7 @@ queries.getDocumentPreview = function(query, cb) {
   });
 };
 
-queries.findDocumentFragmentsWithContent = function(documentId, searchString, from, size) {
+queries.findDocumentFragmentsWithContent = function(documentId, searchString, from, size, type) {
   console.log("Asking for fragment in %s containing %s", documentId, searchString);
 
   return client.search({
