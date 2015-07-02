@@ -60,6 +60,7 @@ queries.getDocumentPreview = function(query, cb) {
   // Pagination
   var size = query.size || 2;
   var from = query.from || 0;
+  var type = query.type || "boolean";
 
   // create a result that contains
   // - fragments
@@ -120,7 +121,7 @@ queries.findDocumentFragmentsWithContent = function(documentId, searchString, fr
         "bool": {
           "must": [
             { "term":  { "_parent": documentId } },
-            { "match": { "content": { "query": searchString, "minimum_should_match": "75%" } } }
+            { "match": { "content": { "query": searchString, "type": type, "minimum_should_match": "75%" } } }
           ]
         }
       },

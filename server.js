@@ -46,7 +46,8 @@ app.get('/search/document/', function (req, res) {
     documentId: req.query.documentId,
     searchString: req.query.searchString,
     from: req.query.from,
-    size: req.query.size
+    size: req.query.size,
+    type: req.query.type
   }, function(error, result) {
     if (error) {
       res.send('500', error.message);
