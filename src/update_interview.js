@@ -38,7 +38,7 @@ var updateIndex = function(id, cb) {
           .error(function() {
             console.error("Failed.", arguments);
           })
-          .done(function() {
+          .then(function() {
             console.log("Done.");
             client.close();
             cb(null);
