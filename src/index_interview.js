@@ -63,6 +63,7 @@ function indexInterview(client, interview) {
 
   var promise = null;
   indexEntries.forEach(function(entry) {
+    console.log('Indexing entry %s...', entry.id);
     if (!promise) {
       promise = client.index(entry);
     } else {

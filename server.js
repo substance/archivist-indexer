@@ -4,6 +4,7 @@ var _ = require('underscore');
 var express = require('express');
 var app = express();
 var queries = require('./src/queries');
+var updateIndex = require('./src/update_interview');
 
 app.set('port', (process.env.PORT || 4002))
 
@@ -53,6 +54,17 @@ app.get('/search/document/', function (req, res) {
       res.send(result);
     }
   });
+});
+
+app.get('/update/document/:id', function (req, res) {
+  var id = req.params.id;
+  updateIndex(id, function(err){
+    if (err) {
+      res.send('500', err.message);
+    } else {
+      res.status(200).send('done');
+    }
+  })
 });
 
 

@@ -4,7 +4,9 @@
   "description": "Indexing Archivist interviews with ElasticSearch.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "seed": "node scripts/configure_index.js; scripts/seed_index.js",
+    "postinstall": "node scripts/configure_index.js; scripts/seed_index.js"
   },
   "dependencies": {
     "async": "^1.2.1",
@@ -12,15 +14,11 @@
     "express": "^4.12.4",
     "substance": "substance/substance#055e3d01178a5ae2fe776cc389ea15a1e4c9c4fe",
     "superagent": "^1.2.0",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "yargs": "^3.13.0"
   },
   "version": "0.0.1",
   "engines": {
     "node": "0.10.x"
-  },
-  "scripts": {
-    "start": "node server.js",
-    "seed": "node scripts/configure_index.js; scripts/seed_index.js",
-    "postinstall": "node scripts/configure_index.js; scripts/seed_index.js"
   }
 }
