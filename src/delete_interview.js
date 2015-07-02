@@ -1,10 +1,14 @@
 exports.removeFragments = function(client, interviewId) {
   var promise = null;
 
-  promise = client.delete({
+  promise = client.deleteByQuery({
     index: 'interviews',
     type: 'fragment',
-    parent: interviewId,
+    body: {
+      query: {
+        term: { parent: interviewId }
+      }
+    }
   });
   
   return promise;
