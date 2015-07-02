@@ -6,7 +6,7 @@ exports.removeFragments = function(client, interviewId) {
     type: 'fragment',
     body: {
       query: {
-        term: { parent: interviewId }
+        term: { _parent: interviewId }
       }
     }
   });
