@@ -23,11 +23,11 @@ var updateIndex = function(id, cb) {
 
   deleteArticle.removeFragments(client, id).error(function() {
     console.error("Failed.", arguments);
-  }).done(function() {
+  }).then(function() {
     console.log("All fragments for", id, "has been removed.");
     deleteArticle.removeInterview(client, id).error(function() {
       console.error("Failed.", arguments);
-    }).done(function() {
+    }).then(function() {
       console.log("Interview", id, "has been removed.");
       getJSON(interviewUrl, function(err, json){
         if (err) return cb(err);
