@@ -22,13 +22,13 @@ function indexInterview(client, interview) {
     "interview_location": documentNode.interview_location
   };
 
-  var shortEntry = {
-    index: 'interviews',
-    type: 'interview',
-    id: interviewId,
-    body: shortData
-  };
+  var shortEntry = { "index" : {
+    _index: 'interviews',
+    _type: 'interview',
+    _id: interviewId,
+  }};
   indexEntries.push(shortEntry);
+  indexEntries.push(shortData);
   // console.log("#################");
   // console.log("Short Entry:");
   // console.log(shortEntry);
@@ -46,29 +46,33 @@ function indexInterview(client, interview) {
     }
 
     var entryId = interviewId + "/" + nodeId;
-    var nodeEntry = {
-      index: 'interviews',
-      type: 'fragment',
-      parent: interviewId,
-      id: entryId,
-      body: {
+    var nodeEntry = { "index" : {
+      _index: 'interviews',
+      _type: 'fragment',
+      _parent: interviewId,
+      _id: entryId,
+    }};
+    indexEntries.push(nodeEntry);
+    indexEntries.push({
         id: nodeId,
         type: type,
         content: nodeContent,
         position: pos
-      }
-    };
-    indexEntries.push(nodeEntry);
+      })
   });
 
-  var promise = null;
-  indexEntries.forEach(function(entry) {
-    console.log('Indexing entry %s...', entry.id);
-    if (!promise) {
-      promise = client.index(entry);
-    } else {
-      promise.then(function() { return client.index(entry); });
-    }
+  // var promise = null;
+  // indexEntries.forEach(function(entry) {
+  //   console.log('Indexing entry %s...', entry.id);
+  //   if (!promise) {
+  //     promise = client.index(entry);
+  //   } else {
+  //     promise.then(function() { return client.index(entry); }).error(function(error, resp) {console.error(error);});
+  //   }
+  // });
+
+  var promise = client.bulk({
+    body: indexEntries
   });
 
   return promise;

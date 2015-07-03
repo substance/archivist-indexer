@@ -7,7 +7,6 @@ var _ = require('underscore');
 var request = require('superagent');
 var elasticsearch = require('elasticsearch');
 var config = require('../config');
-var client = new elasticsearch.Client(_.clone(config));
 
 var getJSON = function(url, cb) {
   request
@@ -20,29 +19,34 @@ var getJSON = function(url, cb) {
 
 var updateIndex = function(id, cb) {
   var interviewUrl = config.archive + '/api/documents/' + id;
+  var client = new elasticsearch.Client(_.clone(config));
 
   deleteArticle.removeFragments(client, id).error(function() {
     console.error("Failed.", arguments);
   }).then(function() {
+    client.close();
+    client = new elasticsearch.Client(_.clone(config));
     console.log("All fragments for", id, "has been removed.");
     deleteArticle.removeInterview(client, id).error(function() {
       console.error("Failed.", arguments);
     }).then(function() {
+      client.close();
+      client = new elasticsearch.Client(_.clone(config));
       console.log("Interview", id, "has been removed.");
       getJSON(interviewUrl, function(err, json){
         if (err) return cb(err);
         console.log('Indexing interview %s...', interviewUrl);
         var interview = new ArchivistInterview(json);
 
-        indexArticle(client, interview)
-          .error(function() {
-            console.error("Failed.", arguments);
-          })
-          .then(function() {
-            console.log("Done.");
-            client.close();
-            cb(null);
-          });
+        indexArticle(client, interview).then(function() {
+          console.log("Done.");
+          client.close();
+          cb(null);
+        }).error(function(error, resp) {
+          console.error(error);
+          client.close();
+          cb(error);
+        });
       });
     });
   });
