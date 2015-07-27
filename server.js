@@ -77,7 +77,7 @@ app.get('/subjects', function(req, res) {
     if (err) {
       res.send('500', err.message);
     } else {
-      res.status(200).send(result);
+      res.status(200).json(result);
     }
   });
 });
