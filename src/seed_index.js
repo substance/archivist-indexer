@@ -6,8 +6,7 @@ var config = require('../config');
 var request = require('superagent');
 var _ = require('underscore');
 
-//var util = require('substance-util');
-var ArchivistInterview = require('../interview');
+var Interview = require('archivist-core/interview');
 var indexInterview = require('./index_interview');
 
 var idx = 0;
@@ -25,7 +24,7 @@ function step(cb) {
   getJSON(url, function(err, json){
     if (err) return cb(err);
     console.log('Indexing interview %s...', url);
-    var interview = new ArchivistInterview(json);
+    var interview = new Interview.fromJson(json);
     var client = new elasticsearch.Client(_.clone(config));
     indexInterview(client, interview).then(function() {
       client.close();

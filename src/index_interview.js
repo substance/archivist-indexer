@@ -1,4 +1,3 @@
-
 var _ = require('underscore');
 
 function indexInterview(client, interview) {
@@ -6,7 +5,9 @@ function indexInterview(client, interview) {
 
   var content = interview.get('content');
   var nodeIds = content.nodes;
-  var interviewId = interview.data.seed.id
+  var subjectIndex = interview.getIndex('type').get('subject_reference');
+  var entityIndex = interview.getIndex('type').get('entity_reference');
+  var interviewId = interview.id;
 
   var documentNode = interview.get('document');
 
@@ -59,6 +60,64 @@ function indexInterview(client, interview) {
         content: nodeContent,
         position: pos
       })
+  });
+
+  _.each(subjectIndex, function(subject, id) {
+    
+    if (!subject) {
+      throw new Error("Corrupted interview json. Subject reference does not exist " + id);
+    }
+
+    var type = subject.type;
+    var target = subject.target;
+    var subjectContent = subject.getText();
+    if (!subjectContent) {
+      return;
+    }
+
+    var entryId = interviewId + "/" + id;
+    var nodeEntry = { "index" : {
+      _index: 'interviews',
+      _type: 'subject_fragment',
+      _parent: interviewId,
+      _id: entryId,
+    }};
+    indexEntries.push(nodeEntry);
+    indexEntries.push({
+      id: id,
+      target: target,
+      type: type,
+      content: subjectContent
+    })
+  });
+
+  _.each(entityIndex, function(entity, id) {
+
+    if (!entity) {
+      throw new Error("Corrupted interview json. Entity reference does not exist " + id);
+    }
+
+    var type = entity.type;
+    var target = entity.target;
+    var entityContent = entity.getText();
+    if (!entityContent) {
+      return;
+    }
+
+    var entryId = interviewId + "/" + id;
+    var nodeEntry = { "index" : {
+      _index: 'interviews',
+      _type: 'entity_fragment',
+      _parent: interviewId,
+      _id: entryId,
+    }};
+    indexEntries.push(nodeEntry);
+    indexEntries.push({
+      id: id,
+      target: target,
+      type: type,
+      content: entityContent
+    })
   });
 
   // var promise = null;

@@ -98,6 +98,24 @@ module.exports = {
           "content": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian",  "term_vector": "with_positions_offsets" },
           "position": { "type": "integer", "index": "not_analyzed" }
         }
+      },
+      "subject_fragment": {
+        "_parent": {"type": "interview"},
+        "properties": {
+          "id": { "type": "string", "index" : "not_analyzed" },
+          "type": { "type": "string", "index" : "not_analyzed" },
+          "content": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian",  "term_vector": "with_positions_offsets" },
+          "target": { "type": "string", "index": "not_analyzed" }
+        }
+      },
+      "entity_fragment": {
+        "_parent": {"type": "interview"},
+        "properties": {
+          "id": { "type": "string", "index" : "not_analyzed" },
+          "type": { "type": "string", "index" : "not_analyzed" },
+          "content": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian",  "term_vector": "with_positions_offsets" },
+          "target": { "type": "string", "index": "not_analyzed" }
+        }
       }
     }
   }

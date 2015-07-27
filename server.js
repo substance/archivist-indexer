@@ -57,6 +57,8 @@ app.get('/search/document/', function (req, res) {
   });
 });
 
+// Update index for document
+
 app.get('/update/document/:id', function (req, res) {
   var id = req.params.id;
   updateIndex(id, function(err){
@@ -66,6 +68,18 @@ app.get('/update/document/:id', function (req, res) {
       res.status(200).send('done');
     }
   })
+});
+
+// Count subject frequency
+
+app.get('/subjects', function(req, res) {
+  queries.countSubjects(function(err, result) {
+    if (err) {
+      res.send('500', err.message);
+    } else {
+      res.status(200).send(result);
+    }
+  });
 });
 
 

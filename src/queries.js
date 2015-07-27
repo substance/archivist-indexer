@@ -7,6 +7,7 @@ var queries = {};
 var async = require('async');
 
 var searchArticles = require("./search_interviews");
+var countSubjects = require("./counters");
 
 queries.findDocumentsWithContentAdvanced = function(query, cb) {
   var searchQuery = JSON.parse(query.searchQuery);
@@ -135,5 +136,16 @@ queries.findDocumentFragmentsWithContent = function(documentId, searchString, fr
     }
   });
 };
+
+queries.countSubjects = function(cb) {
+  countSubjects(function(err, result) {
+    if (err) return cb(err);
+    var subjects = {};
+    _.each(result.facets.target.terms, function(subject) {
+      subjects[subject.term] = subject.count;
+    });
+    cb(null, subjects);
+  });
+}
 
 module.exports = queries;

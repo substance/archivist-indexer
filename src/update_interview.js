@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var ArchivistInterview = require('../interview');
+var Interview = require('archivist-core/interview');
 var indexArticle = require('./index_interview.js');
 var deleteArticle = require('./delete_interview.js');
 var _ = require('underscore');
@@ -36,7 +36,7 @@ var updateIndex = function(id, cb) {
       getJSON(interviewUrl, function(err, json){
         if (err) return cb(err);
         console.log('Indexing interview %s...', interviewUrl);
-        var interview = new ArchivistInterview(json);
+        var interview = new Interview.fromJson(json);
 
         indexArticle(client, interview).then(function() {
           console.log("Done.");
