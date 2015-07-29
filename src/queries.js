@@ -151,7 +151,9 @@ queries.findDocumentsWithSubject = function(query, cb) {
     async.each(result.hits.hits, function(doc, cb) {
       queries.getDocumentSubjectsPreview({
         documentId: doc._id,
-        searchString: searchQuery.searchStr
+        searchString: searchQuery.searchStr,
+        size: 5000,
+        from: 0
       }, function(err, docPreview) {
         if (err) return cb(err);
         doc.fragments = docPreview.fragments;
