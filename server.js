@@ -57,6 +57,24 @@ app.get('/search/document/', function (req, res) {
   });
 });
 
+app.get('/search/subject', function (req, res) {
+  // Test: if query object is empty, then we trying to fetch results for "Moscow"
+  if(_.isEmpty(req.query)) {
+    req.query = {
+      searchQuery: JSON.stringify({
+        searchStr: '554a82e73a7f86f805fbed67'
+      })
+    }
+  }
+  queries.findDocumentsWithSubject(req.query, function(error, result) {
+    if (error) {
+      res.send('500', error.message);
+    } else {
+      res.send(result);
+    }
+  });
+});
+
 // Update index for document
 
 app.get('/update/document/:id', function (req, res) {
