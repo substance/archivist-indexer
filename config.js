@@ -2,7 +2,7 @@ var config = {
 	// Elastic Search host
   host: 'http://46.101.188.112:9200',
   // Archivist host
-  archive: 'http://ost.d4s.io'
+  archive: 'http://archivist-ost.herokuapp.com'
 };
 
 console.log();

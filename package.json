@@ -9,7 +9,7 @@
     "postinstall": "node scripts/configure_index.js; scripts/seed_index.js"
   },
   "dependencies": {
-    "archivist-core": "substance/archivist-core#421339019e5659693baa2ce1cb1fefbd82c53728",
+    "archivist-core": "substance/archivist-core#31349d30353ef1b55e8817b74479bf67b2eb29ae",
     "async": "^1.2.1",
     "elasticsearch": "^5.0.0",
     "express": "^4.12.4",
