@@ -33,6 +33,7 @@ var deleteFromIndex = function(id, cb) {
       console.log("Interview", id, "has been removed from index.");
       cb(null);
     });
+  });
 }
 
 var updateIndex = function(id, cb) {

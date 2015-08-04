@@ -49,7 +49,7 @@ queries.findDocumentsWithContent = function(query, cb) {
 
 queries.getDocumentMetaById = function(id) {
   return client.get({
-    index: 'interviews',
+    index: 'iinterviews',
     type: 'interview',
     id: id
   });
@@ -114,7 +114,7 @@ queries.findDocumentFragmentsWithContent = function(documentId, searchString, fr
   console.log("Asking for fragment in %s containing %s", documentId, searchString);
 
   return client.search({
-    index: 'interviews',
+    index: 'iinterviews',
     type: 'fragment',
     body: {
       "size": size,
@@ -208,7 +208,7 @@ queries.findDocumentSubjectFragmentsWithContent = function(documentId, searchStr
   console.log("Asking for subject fragment in %s containing %s", documentId, searchString);
 
   return client.search({
-    index: 'interviews',
+    index: 'iinterviews',
     type: 'subject_fragment',
     body: {
       "size": size,

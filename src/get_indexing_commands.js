@@ -29,7 +29,7 @@ module.exports = function getIndexingCommands(interview) {
   };
 
   var shortEntry = { "index" : {
-    _index: 'interviews',
+    _index: 'iinterviews',
     _type: 'interview',
     _id: interviewId,
   }};
@@ -69,7 +69,7 @@ module.exports = function getIndexingCommands(interview) {
 
     var entryId = nodeId;
     var nodeEntry = { "index" : {
-      _index: 'interviews',
+      _index: 'iinterviews',
       _type: 'fragment',
       _parent: interviewId,
       _id: entryId,

@@ -1,5 +1,5 @@
 module.exports = {
-  'index': 'interviews',
+  'index': 'iinterviews',
   'body': {
     "settings": {
       "analysis": {

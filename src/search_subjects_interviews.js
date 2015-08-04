@@ -35,7 +35,7 @@ var searchArticlesWithSubject = function(options, cb) {
   }
 
   var query = {
-    index: 'interviews',
+    index: 'iinterviews',
     type: 'interview',
     // only for debugging
     // explain: true,
