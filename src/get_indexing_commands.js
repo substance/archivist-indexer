@@ -11,7 +11,9 @@ module.exports = function getIndexingCommands(interview) {
   var htmlExporter = new interview.constructor.HtmlExporter({
     skipTypes: {
       'timecode': true
-    }
+    },
+    exportAnnotationFragments: true,
+    containerId: 'content'
   });
   htmlExporter.initialize(interview);
 
