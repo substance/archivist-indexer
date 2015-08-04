@@ -10,7 +10,7 @@ app.set('port', (process.env.PORT || 4002))
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allo w-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
 
@@ -57,29 +57,24 @@ app.get('/search/document/', function (req, res) {
   });
 });
 
-app.get('/search/subject', function (req, res) {
-  // Test: if query object is empty, then we trying to fetch results for "Moscow"
-  if(_.isEmpty(req.query)) {
-    req.query = {
-      searchQuery: JSON.stringify({
-        searchStr: '554a82e73a7f86f805fbed67'
-      })
-    }
-  }
-  queries.findDocumentsWithSubject(req.query, function(error, result) {
-    if (error) {
-      res.send('500', error.message);
-    } else {
-      res.send(result);
-    }
-  });
-});
-
 // Update index for document
 
 app.get('/update/document/:id', function (req, res) {
   var id = req.params.id;
   updateIndex(id, function(err){
+    if (err) {
+      res.send('500', err.message);
+    } else {
+      res.status(200).send('done');
+    }
+  })
+});
+
+// Remove index for document
+
+app.get('/remove/document/:id', function (req, res) {
+  var id = req.params.id;
+  removeIndex(id, function(err){
     if (err) {
       res.send('500', err.message);
     } else {

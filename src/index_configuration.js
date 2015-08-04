@@ -49,13 +49,13 @@ module.exports = {
             "type": "custom",
             "tokenizer": "standard",
             "filter": ["stopwords_ru", "stop", "custom_word_delimiter", "lowercase", "russian_morphology", "english_morphology"],
-            "char_filter": ["ru"]
+            "char_filter": ["ru", "html_strip"]
           },
           "searcher_ru": {
             "type": "custom",
             "tokenizer": "standard",
             "filter": ["stopwords_ru", "stop", "custom_word_delimiter", "lowercase", "russian_morphology", "english_morphology"],
-            "char_filter": ["ru"]
+            "char_filter": ["ru", "html_strip"]
           },
           "russian": {
             "tokenizer":  "standard",
@@ -78,16 +78,13 @@ module.exports = {
     "mappings": {
       "interview": {
        "properties": {
-         // interview abstract and interviewee biography are indexed for fuzzy full-text search
-         "abstract": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian" },
-         "interviewee_bio": { "type": "string", "index" : "not_analyzed"},
+         // interview short summary
+         "short_summary": { "type": "string", "index" : "not_analyzed" },
+         "short_summary_en": { "type": "string", "index" : "not_analyzed" },
          // title (interviewee name) for exact full-text search (no partial matches)
-         "title": { "type": "string", "index" : "analyzed", "analyzer": "standard" },
+         "title": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru" },
          // The rest are facets which are used for strict match queries or filtering only
-         "published_on": { "type": "string", "index" : "not_analyzed"},
-         "interview_date": { "type": "string", "index" : "not_analyzed"},
-         "interview_location": { "type": "string", "index" : "not_analyzed"}
-
+         "published_on": { "type": "string", "index" : "not_analyzed"}
        }
       },
       "fragment": {
@@ -96,24 +93,7 @@ module.exports = {
           "id": { "type": "string", "index" : "not_analyzed" },
           "type": { "type": "string", "index" : "not_analyzed" },
           "content": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian",  "term_vector": "with_positions_offsets" },
-          "position": { "type": "integer", "index": "not_analyzed" }
-        }
-      },
-      "subject_fragment": {
-        "_parent": {"type": "interview"},
-        "properties": {
-          "id": { "type": "string", "index" : "not_analyzed" },
-          "type": { "type": "string", "index" : "not_analyzed" },
-          "content": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian",  "term_vector": "with_positions_offsets" },
-          "target": { "type": "string", "index": "not_analyzed" }
-        }
-      },
-      "entity_fragment": {
-        "_parent": {"type": "interview"},
-        "properties": {
-          "id": { "type": "string", "index" : "not_analyzed" },
-          "type": { "type": "string", "index" : "not_analyzed" },
-          "content": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian",  "term_vector": "with_positions_offsets" },
+          "position": { "type": "integer", "index": "not_analyzed" },
           "target": { "type": "string", "index": "not_analyzed" }
         }
       }
