@@ -15,12 +15,10 @@ module.exports = function getIndexingCommands(interview) {
   var indexEntries = [];
 
   var shortData = {
-    "abstract": documentNode.abstract,
-    "interviewee_bio": documentNode.interviewee_bio,
+    "summary": documentNode.short_summary,
+    "summary_en": documentNode.short_summary_en,
     "title": documentNode.title,
-    "published_on": documentNode.published_on,
-    "interview_date": documentNode.interview_date,
-    "interview_location": documentNode.interview_location
+    "published_on": documentNode.published_on
   };
 
   var shortEntry = { "index" : {
