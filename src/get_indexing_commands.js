@@ -8,7 +8,11 @@ module.exports = function getIndexingCommands(interview) {
   var interviewId = interview.id;
 
   var documentNode = interview.get('document');
-  var htmlExporter = new interview.constructor.HtmlExporter();
+  var htmlExporter = new interview.constructor.HtmlExporter({
+    skipTypes: {
+      'timecode': true
+    }
+  });
   htmlExporter.initialize(interview);
 
   // record all entries and call ES later, so that we only index if everything goes well
