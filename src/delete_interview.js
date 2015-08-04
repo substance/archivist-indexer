@@ -2,7 +2,7 @@ exports.removeFragments = function(client, interviewId) {
   var promise = null;
 
   promise = client.deleteByQuery({
-    index: 'iinterviews',
+    index: 'interviews',
     type: 'fragment',
     body: {
       query: {
@@ -18,7 +18,7 @@ exports.removeInterview = function(client, interviewId) {
   var promise = null;
 
   promise = client.delete({
-    index: 'iinterviews',
+    index: 'interviews',
     type: 'interview',
     id: interviewId,
   });

@@ -6,7 +6,7 @@ var countSubjects = function(cb) {
   var client = new elasticsearch.Client(_.clone(config));
 
   var query = {
-    index: 'iinterviews',
+    index: 'interviews',
     type: 'subject_fragment',
     search_type: 'count',
     body: {

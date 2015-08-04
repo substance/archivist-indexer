@@ -79,7 +79,7 @@ var searchArticles = function(options, cb) {
   }
 
   var query = {
-    index: 'iinterviews',
+    index: 'interviews',
     type: 'interview',
     // only for debugging
     // explain: true,
