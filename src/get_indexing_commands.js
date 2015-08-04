@@ -1,3 +1,5 @@
+var cheerio = require('cheerio');
+global.$ = cheerio.load('', {decodeEntities: false});
 
 module.exports = function getIndexingCommands(interview) {
 
@@ -7,6 +9,7 @@ module.exports = function getIndexingCommands(interview) {
 
   var documentNode = interview.get('document');
   var htmlExporter = new interview.constructor.HtmlExporter();
+  htmlExporter.initialize(interview);
 
   // record all entries and call ES later, so that we only index if everything goes well
   var indexEntries = [];
@@ -41,7 +44,8 @@ module.exports = function getIndexingCommands(interview) {
     if (!nodeContent) {
       return;
     }
-    var entryId = interviewId + "/" + nodeId;
+    var nodeHtml = htmlExporter.convertNode(node).html();
+    var entryId = nodeId;
     var nodeEntry = { "index" : {
       _index: 'interviews',
       _type: 'fragment',
@@ -52,8 +56,9 @@ module.exports = function getIndexingCommands(interview) {
     indexEntries.push({
         id: nodeId,
         type: type,
-        content: nodeContent,
-        position: pos
+        content: nodeHtml,
+        position: pos,
+        target: []
       });
   });
 
