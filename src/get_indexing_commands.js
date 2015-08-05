@@ -29,7 +29,7 @@ module.exports = function getIndexingCommands(interview) {
       subjectStats[id] = (subjectStats[id] || 0) + 1;
     });
   });
-  subjectStats = _.map(subjectRefs, function(count, id) {
+  subjectStats = _.map(subjectStats, function(count, id) {
     return {
       id: id,
       count: count
@@ -41,7 +41,7 @@ module.exports = function getIndexingCommands(interview) {
     var id = ref.target;
     entityStats[ref.target] = (entityStats[id] || 0) + 1;
   });
-  entityStats = _.map(entityRefs, function(count, id) {
+  entityStats = _.map(entityStats, function(count, id) {
     return {
       id: id,
       count: count
