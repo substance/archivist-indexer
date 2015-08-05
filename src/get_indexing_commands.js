@@ -29,13 +29,24 @@ module.exports = function getIndexingCommands(interview) {
       subjectStats[id] = (subjectStats[id] || 0) + 1;
     });
   });
+  subjectRefs = _.map(subjectRefs, function(count, id) {
+    return {
+      id: id,
+      count: count
+    };
+  });
+
   var entityRefs = interview.getIndex('type').get('entity_reference');
   _.each(entityRefs, function(ref) {
     var id = ref.target;
     entityStats[ref.target] = (entityStats[id] || 0) + 1;
   });
-
-  debugger;
+  entityRefs = _.map(entityRefs, function(count, id) {
+    return {
+      id: id,
+      count: count
+    };
+  });
 
   var shortData = {
     "summary": documentNode.short_summary,
