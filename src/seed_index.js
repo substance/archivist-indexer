@@ -3,8 +3,8 @@
 var elasticsearch = require('elasticsearch');
 var config = require('../config');
 
-var request = require('superagent');
 var _ = require('underscore');
+var getJSON = require('./get_json');
 
 var Interview = require('archivist-core/interview');
 var indexInterview = require('./index_interview');
@@ -30,7 +30,7 @@ function step(cb) {
       client.close();
       count++;
       step(cb);
-    }).error(function(error, resp) {
+    }).error(function(error) {
       console.error(error);
       client.close();
       cb(error);
@@ -46,7 +46,7 @@ var seedIndex = function(options, cb) {
     if (err) return cb(err);
     var docs = json[1];
     _.each(docs, function(doc){
-      url = config.archive + '/api/documents/' + doc._id;
+      var url = config.archive + '/api/documents/' + doc._id;
       documentUrs.push(url);
     });
 
@@ -60,14 +60,5 @@ var seedIndex = function(options, cb) {
     });
   });
 };
-
-var getJSON = function(url, cb) {
-  request
-    .get(url)
-    .end(function(err, res){
-      if(err) console.error(err);
-      cb(err, res.body);
-    });
-}
 
 module.exports = seedIndex;

@@ -1,10 +1,9 @@
 var elasticsearch = require('elasticsearch');
 var config = require('../config');
 var _ = require('underscore');
+var getJSON = require('./get_json');
 
-var searchArticles = function(options, cb) {
-  var client = new elasticsearch.Client(_.clone(config));
-
+function buildQuery(options) {
   function _facetFilter(facet, values) {
     return {
       "nested": {
@@ -62,9 +61,15 @@ var searchArticles = function(options, cb) {
     return query;
   }
 
-  function _query(searchString, filters) {
+  function _query(searchString, options) {
     // either
-    if (!searchString && filters.length === 0) {
+    var hasFilters = false;
+    _.each(options.filters, function(values) {
+      if (values.length > 0) {
+        hasFilters = true;
+      }
+    });
+    if (!searchString && !hasFilters) {
       return {
         "match_all" : {}
       };
@@ -76,7 +81,7 @@ var searchArticles = function(options, cb) {
               "has_child": {
                 "type": "fragment",
                 "score_mode" : "sum",
-                "query": _fragmentMatch(searchString, filters)
+                "query": _fragmentMatch(searchString, options.extendedFilters)
               }
             },
             {
@@ -112,7 +117,7 @@ var searchArticles = function(options, cb) {
       ],
       "query": {
         "filtered": {
-          "query": _query(options.searchString, options.filters),
+          "query": _query(options.searchString, options),
           "filter": _mustMatch(options.filters),
           // "filter": null
         }
@@ -172,17 +177,54 @@ var searchArticles = function(options, cb) {
     query.body.sort = [{ "published_on": { "order": "desc" } }];
   }
 
-  console.log("################################");
-  console.log(JSON.stringify(query, null, 2));
-  console.log("################################");
+  return query;
+}
 
-  client.search(query).then(function (body) {
-    client.close();
-    cb(null, body);
-  }, function (error) {
-    console.trace(error.message);
-    client.close();
-    cb(error);
+
+function expandSubjectIds(ids, cb) {
+  if (!ids || ids.length === 0) {
+    cb(null, []);
+  }
+  var idx = 0;
+  var result = [];
+  function step(cb) {
+    if (idx >=ids.length) {
+      result = _.uniq(result);
+      cb(null, result);
+      return;
+    }
+    var subjectId = ids[idx++];
+    getJSON(config.archive + '/api/subjects/children/'+subjectId, function(err, ids) {
+      if (err) return cb(err);
+      result = result.concat(ids);
+      step(cb);
+    });
+  }
+  step(cb);
+}
+
+var searchArticles = function(options, cb) {
+  options.filters = options.filters || {};
+  options.extendedFilters = _.clone(options.filters);
+  expandSubjectIds(options.filters.subjects, function(err, extendedSubjects) {
+    if (err) return cb(err);
+    options.extendedFilters.subjects = extendedSubjects;
+
+    var client = new elasticsearch.Client(_.clone(config));
+    var query = buildQuery(options);
+
+    console.log("################################");
+    console.log(JSON.stringify(query, null, 2));
+    console.log("################################");
+
+    client.search(query).then(function (body) {
+      client.close();
+      cb(null, body);
+    }, function (error) {
+      console.trace(error.message);
+      client.close();
+      cb(error);
+    });
   });
 };
 

@@ -101,7 +101,7 @@ module.exports = function getIndexingCommands(interview) {
         });
       }
     });
-    subjectFacets = _.unique(subjectFacets);
+    subjectFacets = _.uniq(subjectFacets);
 
     var entryId = nodeId;
     var nodeEntry = { "index" : {
