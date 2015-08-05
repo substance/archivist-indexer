@@ -34,12 +34,12 @@ var searchArticles = function(options, cb) {
             },
             {
               "match": {
-                "abstract": { "query": searchString, "minimum_should_match": "25%", "boost": 3.0 }
+                "short_summary": { "query": searchString, "minimum_should_match": "25%", "boost": 3.0 }
               }
             },
             {
               "match": {
-                "interviewee_bio": { "query": searchString, "minimum_should_match": "25%", "boost": 2.0 }
+                "short_summary_en": { "query": searchString, "minimum_should_match": "25%", "boost": 3.0 }
               }
             },
             // Match of DOI
@@ -99,15 +99,35 @@ var searchArticles = function(options, cb) {
         "fields": {
           // NOTE: "number_of_fragments" : 0 is necessary to suppress lucene's automatic truncation of fragments
           "title": { "number_of_fragments" : 0 },
-          "abstract": { "number_of_fragments" : 0 },
-          "interviewee_bio": { "number_of_fragments" : 0 },
+          "short_summary": { "number_of_fragments" : 0 },
+          "short_summary_en": { "number_of_fragments" : 0 },
           "id": { "number_of_fragments" : 0 },
         }
       },
       "aggs": {
+        // "interviews": {
+        //   "terms": {
+
+        //   },
+        //   "aggs": {
+        //     "fragments": {
+        //       "children": {
+        //         "type": "fragment"
+        //       },
+        //       "aggs": {
+        //         "subjects": {
+        //           "terms": {
+        //             "subjects": "fragment.subjects",
+        //             "size": 5000
+        //           }
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
 
         // "subjects" : {
-        //   "terms" : { "field" : "subjects", "size": 100 }
+        //   "terms" : { "field" : "subjects", "size": 5000 }
         // },
         // "article_type": {
         //   "terms" : { "field" : "article_type", "size": 100 }

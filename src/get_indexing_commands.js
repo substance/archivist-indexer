@@ -51,19 +51,26 @@ module.exports = function getIndexingCommands(interview) {
     }
     var nodeHtml = htmlExporter.convertNode(node).html();
 
-    var facets = [];
+    var entityFacets = [];
+    var subjectFacets = [];
     var path = [node.id, 'content'];
     var annotations = interview.getIndex('annotations').get(path);
     _.each(annotations, function(anno) {
       if (anno.type === "entity_reference") {
-        facets.push(anno.target);
+        entityFacets.push(anno.target);
       }
     });
     var annotationFragments = interview.containerAnnotationIndex.getFragments(path, 'content');
     _.each(annotationFragments, function(annoFragment) {
       var anno = annoFragment.anno;
       if (anno.type === "subject_reference") {
-        facets = facets.concat(anno.target);
+        _.each(anno.target, function(target) {
+          var subjectFacet = {
+            id: target,
+            ref_id: anno.id
+          }
+          subjectFacets.push(subjectFacet);
+        })
       }
     });
 
@@ -80,7 +87,8 @@ module.exports = function getIndexingCommands(interview) {
         type: type,
         content: nodeHtml,
         position: pos,
-        target: facets
+        subjects: subjectFacets,
+        entities: entityFacets
       });
   });
 

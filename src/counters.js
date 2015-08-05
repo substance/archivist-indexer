@@ -7,13 +7,13 @@ var countSubjects = function(cb) {
 
   var query = {
     index: 'interviews',
-    type: 'subject_fragment',
+    type: 'fragment',
     search_type: 'count',
     body: {
       "facets": {
-      	"target" : { 
+      	"subjects" : { 
       		"terms" : {
-      			"field" : "target",
+      			"field" : "subjects",
       			"size": 5000
       		} 
       	}
