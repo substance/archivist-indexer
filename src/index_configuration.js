@@ -27,7 +27,7 @@ module.exports = {
           },
           "russian_stop": {
             "type":       "stop",
-            "stopwords":  "_russian_" 
+            "stopwords":  "_russian_"
           },
           "russian_stemmer": {
             "type":       "stemmer",
@@ -84,7 +84,19 @@ module.exports = {
          // title (interviewee name) for exact full-text search (no partial matches)
          "title": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru" },
          // The rest are facets which are used for strict match queries or filtering only
-         "published_on": { "type": "string", "index" : "not_analyzed"}
+         "published_on": { "type": "string", "index" : "not_analyzed"},
+         "subjects": {
+            "properties": {
+              "id": { "type": "string", "index": "not_analyzed" },
+              "count": { "type": "integer" }
+            }
+          },
+         "entities": {
+            "properties": {
+              "id": { "type": "string", "index": "not_analyzed" },
+              "count": { "type": "integer" }
+            }
+          }
        }
       },
       "fragment": {
@@ -95,12 +107,7 @@ module.exports = {
           "content": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian",  "term_vector": "with_positions_offsets" },
           "position": { "type": "integer", "index": "not_analyzed" },
           "entities": { "type": "string", "index": "not_analyzed" },
-          "subjects": { 
-            "properties" : {
-              "id" : {"type" : "string", "index": "not_analyzed"},
-              "ref_id" : {"type" : "string", "index": "not_analyzed"}
-            }
-          }
+          "subjects": {"type" : "string", "index": "not_analyzed"}
         }
       }
     }
