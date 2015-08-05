@@ -126,9 +126,9 @@ var searchArticles = function(options, cb) {
         //   }
         // }
 
-        // "subjects" : {
-        //   "terms" : { "field" : "subjects", "size": 5000 }
-        // },
+        "subjects" : {
+          "terms" : { "field" : "subjects", "size": 5000 }
+        },
         // "article_type": {
         //   "terms" : { "field" : "article_type", "size": 100 }
         // },

@@ -7,22 +7,20 @@ var client = new elasticsearch.Client(_.clone(config));
 var query = {
   index: 'interviews',
   type: 'interview',
-  //search_type: 'count',
+  search_type: 'count',
   body: {
     "query": {
        "match_all" : { }
     },
     "aggs": {
-      "fragment": {
-        "children": {
-          "type" : "fragment" 
-        },
-        "aggs": {
-          "subjects": {
-            "terms": {
-              "field": "fragment.subjects.id",
-              "size": 5000
-            }
+    "fragment": {
+      "nested": {
+        "path": "fragment"
+      },
+      "aggs": {
+        "subjects": {
+          "terms": {
+            "field": "fragment.subjects"
           }
         }
       }
