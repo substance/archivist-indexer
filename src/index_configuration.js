@@ -86,6 +86,7 @@ module.exports = {
          // The rest are facets which are used for strict match queries or filtering only
          "published_on": { "type": "string", "index" : "not_analyzed"},
          "subjects": {
+            "type": "nested",
             "properties": {
               "id": { "type": "string", "index": "not_analyzed" },
               "count": { "type": "integer" }
