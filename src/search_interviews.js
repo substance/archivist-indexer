@@ -5,21 +5,36 @@ var _ = require('underscore');
 var searchArticles = function(options, cb) {
   var client = new elasticsearch.Client(_.clone(config));
 
+  function _facetFilter(facet, values) {
+    return {
+      "nested": {
+        "path": facet,
+        "filter": {
+          "bool": {
+            "must": [
+              _.map(values, function(value) {
+                var matchTerm = { "term": { } };
+                matchTerm.term[facet+".id"] = value;
+                return matchTerm;
+              })
+            ]
+          }
+        }
+      }
+    };
+  }
+
   function _mustMatch(filters) {
-    var matchTerms = [];
-    _.each(filters, function(filterValues, facet) {
-      _.each(filterValues, function(value) {
-        var matchTerm = { "term": { } };
-        matchTerm.term[facet] = value;
-        matchTerms.push(matchTerm);
-      });
+    var facetFilters = [];
+    _.each(filters, function(values, facet) {
+      if (values.length > 0) {
+        facetFilters.push(_facetFilter(facet, values));
+      }
     });
-    if (matchTerms.length > 0) {
+    if (facetFilters.length > 0) {
       return {
-        "bool": {
-          "must": [
-            matchTerms
-          ]
+        'and': {
+          'filters': facetFilters
         }
       };
     } else {
@@ -52,7 +67,7 @@ var searchArticles = function(options, cb) {
     if (!searchString && filters.length === 0) {
       return {
         "match_all" : {}
-      }
+      };
     } else {
       return {
         "bool": {
@@ -91,7 +106,7 @@ var searchArticles = function(options, cb) {
     // only for debugging
     // explain: true,
     body: {
-      "size": 30,
+      "size": 100,
       "sort": [
         { "_score": { "order": "desc" } }
       ],
@@ -99,6 +114,7 @@ var searchArticles = function(options, cb) {
         "filtered": {
           "query": _query(options.searchString, options.filters),
           "filter": _mustMatch(options.filters),
+          // "filter": null
         }
       },
       "highlight": {
