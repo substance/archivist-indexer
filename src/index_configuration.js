@@ -93,6 +93,7 @@ module.exports = {
             }
           },
          "entities": {
+            "type": "nested",
             "properties": {
               "id": { "type": "string", "index": "not_analyzed" },
               "count": { "type": "integer" }

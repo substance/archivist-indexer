@@ -5,12 +5,54 @@ var _ = require('underscore');
 var searchArticles = function(options, cb) {
   var client = new elasticsearch.Client(_.clone(config));
 
-  function _query(searchString) {
+  function _mustMatch(filters) {
+    var matchTerms = [];
+    _.each(filters, function(filterValues, facet) {
+      _.each(filterValues, function(value) {
+        var matchTerm = { "term": { } };
+        matchTerm.term[facet] = value;
+        matchTerms.push(matchTerm);
+      });
+    });
+    if (matchTerms.length > 0) {
+      return {
+        "bool": {
+          "must": [
+            matchTerms
+          ]
+        }
+      };
+    } else {
+      return null;
+    }
+  }
+
+  function _fragmentMatch(searchString, filters) {
+    var should = [];
+    var query = {
+      "bool": {
+        "should": should
+      }
+    };
+    if (searchString) {
+      should.push({ "match": { "content": { "query": searchString, "minimum_should_match": "75%" } } });
+    }
+    _.each(filters, function(filterValues, facet) {
+      _.each(filterValues, function(value) {
+        var matchTerm = { "term": { } };
+        matchTerm.term[facet] = value;
+        should.push(matchTerm);
+      });
+    });
+    return query;
+  }
+
+  function _query(searchString, filters) {
     // either
-    if (!searchString) {
+    if (!searchString && filters.length === 0) {
       return {
         "match_all" : {}
-      };
+      }
     } else {
       return {
         "bool": {
@@ -19,12 +61,7 @@ var searchArticles = function(options, cb) {
               "has_child": {
                 "type": "fragment",
                 "score_mode" : "sum",
-                "query": {
-                  
-                  "match": {
-                    "content": { "query": searchString, "minimum_should_match": "75%" }
-                  }
-                }
+                "query": _fragmentMatch(searchString, filters)
               }
             },
             {
@@ -41,40 +78,10 @@ var searchArticles = function(options, cb) {
               "match": {
                 "short_summary_en": { "query": searchString, "minimum_should_match": "25%", "boost": 3.0 }
               }
-            },
-            // Match of DOI
-            {
-              "match" : {
-                  "id" : searchString
-              }
             }
           ]
         }
       };
-    }
-  }
-
-  function _filters(filters) {
-    var matchTerms = [];
-    _.each(filters, function(filterValues, facet) {
-      _.each(filterValues, function(value) {
-        var matchTerm = { "term": { } };
-        matchTerm.term[facet] = value;
-        matchTerms.push(matchTerm);
-      });
-    });
-
-    if (matchTerms.length > 0) {
-      return {
-        "bool": {
-          // TODO turn into must ?
-          "must": [ 
-            matchTerms
-          ]
-        }
-      };
-    } else {
-      return null;
     }
   }
 
@@ -90,8 +97,8 @@ var searchArticles = function(options, cb) {
       ],
       "query": {
         "filtered": {
-          "query": _query(options.searchString),
-          "filter": _filters(options.filters),
+          "query": _query(options.searchString, options.filters),
+          "filter": _mustMatch(options.filters),
         }
       },
       "highlight": {
@@ -100,54 +107,53 @@ var searchArticles = function(options, cb) {
           // NOTE: "number_of_fragments" : 0 is necessary to suppress lucene's automatic truncation of fragments
           "title": { "number_of_fragments" : 0 },
           "short_summary": { "number_of_fragments" : 0 },
-          "short_summary_en": { "number_of_fragments" : 0 },
-          "id": { "number_of_fragments" : 0 },
+          "short_summary_en": { "number_of_fragments" : 0 }
         }
       },
       "aggs": {
-        // "interviews": {
-        //   "terms": {
-
-        //   },
-        //   "aggs": {
-        //     "fragments": {
-        //       "children": {
-        //         "type": "fragment"
-        //       },
-        //       "aggs": {
-        //         "subjects": {
-        //           "terms": {
-        //             "subjects": "fragment.subjects",
-        //             "size": 5000
-        //           }
-        //         }
-        //       }
-        //     }
-        //   }
-        // }
-
-        "subjects" : {
-          "terms" : { "field" : "subjects", "size": 5000 }
+        subjects: {
+          "nested" : {
+            "path" : "subjects"
+          },
+          aggs: {
+            "occurrences" : {
+              terms : {
+                "field": "subjects.id",
+                "size": 5000
+              },
+              aggs: {
+                total_count: {
+                  "sum" : { "field" : "subjects.count" }
+                }
+              }
+            }
+          }
         },
-        // "article_type": {
-        //   "terms" : { "field" : "article_type", "size": 100 }
-        // },
-        // // "keywords" : {
-        // //   "terms" : { "field" : "keywords" }
-        // // },
-        // "authors": {
-        //   "terms" : { "field" : "authors", "size": 30 }
-        // },
-        // "organisms": {
-        //   "terms" : { "field" : "organisms", "size": 10 }
-        // }
+        entities: {
+          "nested" : {
+            "path" : "entities"
+          },
+          aggs: {
+            "occurrences" : {
+              terms : {
+                "field": "entities.id",
+                "size": 5000
+              },
+              aggs: {
+                total_count: {
+                  "sum" : { "field" : "entities.count" }
+                }
+              }
+            }
+          }
+        }
       }
     }
   };
 
 
   if (!options.searchString) {
-    query.body.sort = [{ "published_on": { "order": "desc" } }]
+    query.body.sort = [{ "published_on": { "order": "desc" } }];
   }
 
   console.log("################################");
@@ -156,7 +162,7 @@ var searchArticles = function(options, cb) {
 
   client.search(query).then(function (body) {
     client.close();
-    cb(null, body)
+    cb(null, body);
   }, function (error) {
     console.trace(error.message);
     client.close();
