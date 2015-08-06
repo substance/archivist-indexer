@@ -2,54 +2,40 @@
 var _ = require('underscore');
 var elasticsearch = require('elasticsearch');
 var config = require("../config");
-var client = new elasticsearch.Client(_.clone(config));
 var queries = {};
 var async = require('async');
 
 var searchArticles = require("./search_interviews");
 
-queries.findDocumentsWithContentAdvanced = function(query, cb) {
-  var searchQuery = JSON.parse(query.searchQuery);
-  console.log('#####', searchQuery);
-
-  searchArticles({
-    searchString: searchQuery.searchStr,
-    filters: searchQuery.filters
-  }, function(err, result) {
-
+queries.findDocumentsWithContent = function(query, cb) {
+  searchArticles(query, function(err, result) {
     if (err) return cb(err);
-    // assuming openFiles is an array of file names 
-    async.each(result.hits.hits, function(doc, cb) {
+    // assuming openFiles is an array of file names
+    async.each(result.interviews, function(record, cb) {
       queries.getDocumentPreview({
-        documentId: doc._id,
-        searchString: searchQuery.searchStr
+        documentId: record.id,
+        searchString: query.searchString
       }, function(err, docPreview) {
         if (err) return cb(err);
-        doc.fragments = docPreview.fragments;
-        cb(err);
+        record.fragments = docPreview.fragments;
+        cb(null);
       });
+      // cb(null);
     }, function() {
       cb(null, result);
     });
   });
 };
 
-
-queries.findDocumentsWithContent = function(query, cb) {
-  var searchQuery = JSON.parse(query.searchQuery);
-  console.log('#####', searchQuery);
-
-  searchArticles({
-    searchString: searchQuery.searchStr,
-    filters: searchQuery.filters
-  }, cb);
-};
-
 queries.getDocumentMetaById = function(id) {
+  var client = new elasticsearch.Client(_.clone(config));
   return client.get({
     index: 'interviews',
     type: 'interview',
     id: id
+  }).then(function(data) {
+    client.close();
+    return data;
   });
 };
 
@@ -94,7 +80,7 @@ queries.getDocumentPreview = function(query, cb) {
       if (fragmentData.highlight) {
         for (var key in fragmentData.highlight) {
           var highlightedContent = fragmentData.highlight[key].join('');
-          console.log("Replacing:\n\t%s\n  with:\n\t%s", fragmentResult[key], highlightedContent);
+          // console.log("Replacing:\n\t%s\n  with:\n\t%s", fragmentResult[key], highlightedContent);
           fragmentResult[key] = highlightedContent;
         }
       }
@@ -109,8 +95,9 @@ queries.getDocumentPreview = function(query, cb) {
 };
 
 queries.findDocumentFragmentsWithContent = function(documentId, searchString, from, size, type) {
-  console.log("Asking for fragment in %s containing %s", documentId, searchString);
+  // console.log("Asking for fragment in %s containing %s", documentId, searchString);
 
+  var client = new elasticsearch.Client(_.clone(config));
   return client.search({
     index: 'interviews',
     type: 'fragment',
@@ -133,105 +120,20 @@ queries.findDocumentFragmentsWithContent = function(documentId, searchString, fr
         }
       }
     }
+  }).then(function(data) {
+    client.close();
+    return data;
   });
 };
 
-// queries.findDocumentsWithSubject = function(query, cb) {
-//   var searchQuery = JSON.parse(query.searchQuery);
-//   console.log('#####', searchQuery);
-
-//   searchArticlesSubject({
-//     searchString: searchQuery.searchStr,
-//   }, function(err, result) {
-
-//     if (err) return cb(err);
-//     // assuming openFiles is an array of file names 
-//     async.each(result.hits.hits, function(doc, cb) {
-//       queries.getDocumentSubjectsPreview({
-//         documentId: doc._id,
-//         searchString: searchQuery.searchStr,
-//         size: 5000,
-//         from: 0
-//       }, function(err, docPreview) {
-//         if (err) return cb(err);
-//         doc.fragments = docPreview.fragments;
-//         cb(err);
-//       });
-//     }, function() {
-//       cb(null, result);
-//     });
-//   });
-// };
-
-// queries.getDocumentSubjectsPreview = function(query, cb) {
-//   var documentId = query.documentId;
-//   var searchString = query.searchString;
-
-//   // Pagination
-//   var size = query.size || 2;
-//   var from = query.from || 0;
-
-//   var _documentMeta;
-//   var _fragments;
-
-//   function createDocumentPreview() {
-//     var result = {};
-//     result.document = _documentMeta;
-//     result.fragments = _fragments || [];
-//     cb(null, result);
-//   }
-
-//   queries.getDocumentMetaById(documentId)
-//   .then(function(data) {
-//     _documentMeta = data._source;
-//     return queries.findDocumentSubjectFragmentsWithContent(documentId, searchString, from, size);
-//   })
-//   .then(function(data) {
-//     _fragments = [];
-//     var fragments = data.hits.hits;
-//     for (var i = 0; i < fragments.length; i++) {
-//       var fragmentData = fragments[i];
-//       var fragmentResult = fragments[i]._source;
-//       _fragments.push(fragmentResult);
-//     }
-//     createDocumentPreview();
-//   })
-//   .error(function(error) {
-//     console.error("Urg", error);
-//     cb(error);
-//   });
-// };
-
-// queries.findDocumentSubjectFragmentsWithContent = function(documentId, searchString, from, size) {
-//   console.log("Asking for subject fragment in %s containing %s", documentId, searchString);
-
-//   return client.search({
-//     index: 'interviews',
-//     type: 'subject_fragment',
-//     body: {
-//       "size": size,
-//       "from": from,
-//       "query": {
-//         "bool": {
-//           "must": [
-//             { "term": { "_parent": documentId } },
-//             { "term": { "target" : searchString } }
-//           ]
-//         }
-//       }
-//     }
-//   });
-// };
-
-// queries.countSubjects = function(cb) {
-//   countSubjects(function(err, result) {
-//     if (err) return cb(err);
-//     var subjects = {};
-//     _.each(result.facets.target.terms, function(subject) {
-//       subjects[subject.term] = subject.count;
-//     });
-//     cb(null, subjects);
-//   });
-// }
+queries.countSubjects = function(cb) {
+  searchArticles({
+    searchString: null,
+    filters: null
+  }, function(err, result) {
+    if (err) return cb(err);
+    cb(null, result.facets.subjects);
+  });
+};
 
 module.exports = queries;

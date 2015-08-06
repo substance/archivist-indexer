@@ -112,6 +112,7 @@ function buildQuery(options) {
     // explain: true,
     body: {
       "size": 100,
+      // _source: false,
       "sort": [
         { "_score": { "order": "desc" } }
       ],
@@ -171,16 +172,36 @@ function buildQuery(options) {
       }
     }
   };
-
-
   if (!options.searchString) {
     query.body.sort = [{ "published_on": { "order": "desc" } }];
   }
-
   return query;
 }
 
+function getResult(res) {
+  var result = {};
+  var hits = res.hits;
+  result.interviews = _.map(hits.hits, function(record) {
+    return {
+      id: record._id,
+      score: record._score,
+      highlight: record.highlight
+    }
+  });
+  var facets = {};
+  _.each(res.aggregations, function(agg, facet) {
+    var stats = {};
+    _.each(agg.occurrences.buckets, function(bucket) {
+      stats[bucket.key] = bucket.total_count.value;
+    });
+    facets[facet] = stats;
+  });
+  result.facets = facets;
+  return result;
+};
+
 var searchArticles = function(options, cb) {
+  console.log('### QUERY OPTIONS:', JSON.stringify(options, null, 2));
   options.filters = options.filters || {};
   getExtendedSubjects("children", options.filters.subjects, function(err, extendedSubjects) {
     if (err) return cb(err);
@@ -190,17 +211,19 @@ var searchArticles = function(options, cb) {
     var client = new elasticsearch.Client(_.clone(config));
     var query = buildQuery(options);
 
-    console.log("################################");
-    console.log(JSON.stringify(query, null, 2));
-    console.log("################################");
+    // console.log("################################");
+    // console.log(JSON.stringify(query, null, 2));
+    // console.log("################################");
 
-    client.search(query).then(function (body) {
+    client.search(query, function(err, res) {
       client.close();
-      cb(null, body);
-    }, function (error) {
-      console.trace(error.message);
-      client.close();
-      cb(error);
+      if (err) {
+        cb(err);
+      } else {
+        // console.log(JSON.stringify(res, null, 2));
+        var result = getResult(res);
+        cb(null, result);
+      }
     });
   });
 };

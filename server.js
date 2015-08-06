@@ -17,15 +17,17 @@ app.use(function(req, res, next) {
 // Full search (including fragments)
 
 app.get('/search', function (req, res) {
-  // Test: if query object is empty, then we trying to fetch results for "Moscow"
-  if(_.isEmpty(req.query)) {
-    req.query = {
-      searchQuery: JSON.stringify({
-        searchStr: 'Москва'
-      })
+  var query = {
+    searchString: ""
+    filters = {};
+  }
+  if(req.query) {
+    query = JSON.parse(req.query);
+    if (query.searchStr) {
+      query.searchString = query.searchStr;
     }
   }
-  queries.findDocumentsWithContentAdvanced(req.query, function(error, result) {
+  queries.findDocumentsWithContent(query, function(error, result) {
     if (error) {
       res.send('500', error.message);
     } else {
@@ -35,20 +37,18 @@ app.get('/search', function (req, res) {
 });
 
 app.get('/search/document/', function (req, res) {
-  // Test: if query object is empty, then we trying to fetch results for "Moscow" and "554e7662f10c3c030049f7ee" document
-  if(_.isEmpty(req.query)) {
-    req.query = {
-      searchString: 'Москва',
-      documentId: '554e7662f10c3c030049f7ee'
+  var query = {
+    documentId: req.query.documentId,
+    searchString: ""
+    filters = {};
+  }
+  if(req.query) {
+    query = JSON.parse(req.query);
+    if (query.searchStr) {
+      query.searchString = query.searchStr;
     }
   }
-  queries.getDocumentPreview({
-    documentId: req.query.documentId,
-    searchString: req.query.searchString,
-    from: req.query.from,
-    size: req.query.size,
-    type: req.query.type
-  }, function(error, result) {
+  queries.getDocumentPreview(query, function(error, result) {
     if (error) {
       res.send('500', error.message);
     } else {
