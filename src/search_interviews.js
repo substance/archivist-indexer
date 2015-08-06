@@ -2,6 +2,7 @@ var elasticsearch = require('elasticsearch');
 var config = require('../config');
 var _ = require('underscore');
 var getExtendedSubjects = require('./get_extended_subjects');
+var searchEntities = require('./search_entities');
 
 function buildQuery(options) {
   function _facetFilter(facet, values) {
@@ -178,7 +179,7 @@ function buildQuery(options) {
   return query;
 }
 
-function getResult(res, options) {
+function getResult(res, options, suggestedEntities) {
   var result = {
   };
   var hits = res.hits;
@@ -189,27 +190,39 @@ function getResult(res, options) {
       interview[property] = snippets.join('<br>');
     });
     interview.subjects = {};
+    var subjectStats = {};
+    _.each(record._source.subjects, function(record) {
+      subjectStats[record.id] = record.count;
+    });
     interview.entities = {};
+    var entityStats = {};
+    _.each(record._source.entities, function(record) {
+      entityStats[record.id] = record.count;
+    });
     if (options.filters) {
       if (options.filters.subjects) {
-        var subjectStats = {};
-        _.each(record._source.subjects, function(record) {
-          subjectStats[record.id] = record.count;
-        });
         _.each(options.filters.subjects, function(id) {
           interview.subjects[id] = subjectStats[id];
         });
       }
       if (options.filters.entities) {
-        var entityStats = {};
-        _.each(record._source.entities, function(record) {
-          entityStats[record.id] = record.count;
-        });
         _.each(options.filters.entities, function(id) {
           interview.entities[id] = entityStats[id];
         });
       }
     }
+    interview.suggestedEntities = {};
+    _.each(suggestedEntities.hits.hits, function(record) {
+      var id = record._id;
+      if (entityStats[id]) {
+        var entity = {
+          name: record._source.name,
+          entity_type: record._source.entity_type,
+          // description: record._source.description
+        };
+        interview.suggestedEntities[id] = entity;
+      }
+    });
     return interview;
   });
   var facets = {};
@@ -231,27 +244,32 @@ var searchArticles = function(options, cb) {
   delete options.searchStr;
   console.log('### QUERY OPTIONS:', JSON.stringify(options, null, 2));
   options.filters = options.filters || {};
+
   getExtendedSubjects("children", options.filters.subjects, function(err, extendedSubjects) {
     if (err) return cb(err);
     options.extendedFilters = _.clone(options.filters);
     options.extendedFilters.subjects = extendedSubjects;
 
-    var client = new elasticsearch.Client(_.clone(config));
-    var query = buildQuery(options);
-
-    // console.log("################################");
-    // console.log(JSON.stringify(query, null, 2));
-    // console.log("################################");
-
-    client.search(query, function(err, res) {
-      client.close();
-      if (err) {
-        cb(err);
-      } else {
-        // console.log(JSON.stringify(res, null, 2));
-        var result = getResult(res, options);
-        cb(null, result);
-      }
+    searchEntities({
+      searchString: options.searchString,
+      threshold: 1.0
+    }, function(err, suggestedEntities) {
+      // console.log('###### ENTITIES', JSON.stringify(suggestedEntities, null, 2));
+      var client = new elasticsearch.Client(_.clone(config));
+      var query = buildQuery(options);
+      // console.log("################################");
+      // console.log(JSON.stringify(query, null, 2));
+      // console.log("################################");
+      client.search(query, function(err, res) {
+        client.close();
+        if (err) {
+          cb(err);
+        } else {
+          // console.log(JSON.stringify(res, null, 2));
+          var result = getResult(res, options, suggestedEntities);
+          cb(null, result);
+        }
+      });
     });
   });
 };
