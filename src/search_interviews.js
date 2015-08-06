@@ -174,12 +174,13 @@ function getResult(res, options, suggestedEntities) {
     _.each(record.highlight, function(snippets, property) {
       interview[property] = snippets.join('<br>');
     });
-    interview.subjects = {};
+    var facets = {};
+    facets.subjects = {};
     var subjectStats = {};
     _.each(record._source.subjects_count, function(record) {
       subjectStats[record.id] = record.count;
     });
-    interview.entities = {};
+    facets.entities = {};
     var entityStats = {};
     _.each(record._source.entities_count, function(record) {
       entityStats[record.id] = record.count;
@@ -187,15 +188,16 @@ function getResult(res, options, suggestedEntities) {
     if (options.filters) {
       if (options.filters.subjects) {
         _.each(options.filters.subjects, function(id) {
-          interview.subjects[id] = subjectStats[id];
+          facets.subjects[id] = subjectStats[id];
         });
       }
       if (options.filters.entities) {
         _.each(options.filters.entities, function(id) {
-          interview.entities[id] = entityStats[id];
+          facets.entities[id] = entityStats[id];
         });
       }
     }
+    interview.facets = facets;
 
     interview.suggestedEntities = {};
     _.each(suggestedEntities.hits.hits, function(record) {
