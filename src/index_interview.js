@@ -35,11 +35,9 @@ function indexInterview(client, interview, cb) {
     getIndexingCommands(interview, function(err, commands) {
       if (err) return cb(err);;
       commands = removeCommands.concat(commands);
-      // client.bulk({
-      //   body: commands
-      // }, cb);
-      console.log(commands);
-      cb(null);
+      client.bulk({
+        body: commands
+      }, cb);
     });
 
   });

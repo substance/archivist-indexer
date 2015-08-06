@@ -5,12 +5,12 @@ var getSubjectTree = require('./get_subject_tree');
 
 function _indexMeta(interview, commands, subjectTree) {
   // calculate stats for subjects
-  var subjectStats = {};
+  var subjectsCount = {};
   function _updateCounter(id) {
-    if (!subjectStats[id]) {
-      subjectStats[id] = 1;
+    if (!subjectsCount[id]) {
+      subjectsCount[id] = 1;
     } else {
-      subjectStats[id]++;
+      subjectsCount[id]++;
     }
   }
   function _countSubject(id) {
@@ -26,23 +26,27 @@ function _indexMeta(interview, commands, subjectTree) {
       _countSubject(id);
     });
   });
-  subjectStats = _.map(subjectStats, function(count, id) {
+  var subjects = Object.keys(subjectsCount);
+  subjectsCount = _.map(subjectsCount, function(count, id) {
     return {
       id: id,
-      count: count
+      count: count,
+      one: 1
     };
   });
   // calculate stats for entities
-  var entityStats = {};
+  var entitiesCount = {};
   var entityRefs = interview.getIndex('type').get('entity_reference');
   _.each(entityRefs, function(ref) {
     var id = ref.target;
-    entityStats[ref.target] = (entityStats[id] || 0) + 1;
+    entitiesCount[ref.target] = (entitiesCount[id] || 0) + 1;
   });
-  entityStats = _.map(entityStats, function(count, id) {
+  var entities = Object.keys(entitiesCount);
+  entitiesCount = _.map(entitiesCount, function(count, id) {
     return {
       id: id,
-      count: count
+      count: count,
+      one: 1
     };
   });
 
@@ -57,8 +61,10 @@ function _indexMeta(interview, commands, subjectTree) {
     "summary_en": documentNode.short_summary_en,
     "title": documentNode.title,
     "published_on": documentNode.published_on,
-    "subjects": subjectStats,
-    "entities": entityStats,
+    "subjects": subjects,
+    "subjects_count": subjectsCount,
+    "entities": entities,
+    "entities_count": entitiesCount,
   };
   commands.push(command);
   commands.push(data);

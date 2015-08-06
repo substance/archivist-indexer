@@ -5,72 +5,51 @@ var getExtendedSubjects = require('./get_extended_subjects');
 var searchEntities = require('./search_entities');
 
 function buildQuery(options) {
-  function _facetFilter(facet, values) {
-    return {
-      "nested": {
-        "path": facet,
-        "filter": {
-          "bool": {
-            "must": [
-              _.map(values, function(value) {
-                var matchTerm = { "term": { } };
-                matchTerm.term[facet+".id"] = value;
-                return matchTerm;
-              })
-            ]
-          }
-        }
-      }
-    };
-  }
 
   function _mustMatch(filters) {
-    var facetFilters = [];
+    var terms = [];
+    var result = {
+      and: terms
+    };
+    var hasFilters = false;
     _.each(filters, function(values, facet) {
       if (values.length > 0) {
-        facetFilters.push(_facetFilter(facet, values));
+        _.each(values, function(value) {
+          var term = {};
+          term[facet] = value;
+          terms.push({ term: term });
+        });
+        hasFilters = true;
       }
     });
-    if (facetFilters.length > 0) {
-      return {
-        'and': {
-          'filters': facetFilters
-        }
-      };
+    if (hasFilters) {
+      return result;
     } else {
       return null;
     }
   }
 
-  function _fragmentMatch(searchString, filters) {
+  function _fragmentMatch(searchString/*, filters*/) {
     var should = [];
-    var query = {
-      "bool": {
-        "should": should
+    var query;
+    if (!searchString) {
+      query = { "match_all": {} };
+    } else {
+      query = {
+        "bool": {
+          "should": should
+        }
+      };
+      if (searchString) {
+        should.push({ "match": { "content": { "query": searchString, "minimum_should_match": "75%" } } });
       }
-    };
-    if (searchString) {
-      should.push({ "match": { "content": { "query": searchString, "minimum_should_match": "75%" } } });
     }
-    // _.each(filters, function(filterValues, facet) {
-    //   _.each(filterValues, function(value) {
-    //     var matchTerm = { "term": { } };
-    //     matchTerm.term[facet] = value;
-    //     should.push(matchTerm);
-    //   });
-    // });
     return query;
   }
 
   function _query(searchString, options) {
     // either
-    var hasFilters = false;
-    _.each(options.filters, function(values) {
-      if (values.length > 0) {
-        hasFilters = true;
-      }
-    });
-    if (!searchString && !hasFilters) {
+    if (!searchString) {
       return {
         "match_all" : {}
       };
@@ -136,17 +115,20 @@ function buildQuery(options) {
       "aggs": {
         subjects: {
           "nested" : {
-            "path" : "subjects"
+            "path" : "subjects_count"
           },
           aggs: {
-            "occurrences" : {
+            "sum" : {
               terms : {
-                "field": "subjects.id",
+                "field": "subjects_count.id",
                 "size": 5000
               },
               aggs: {
-                total_count: {
-                  "sum" : { "field" : "subjects.count" }
+                occurrences: {
+                  "sum" : { "field" : "subjects_count.count" }
+                },
+                count: {
+                  "sum" : { "field" : "subjects_count.one" }
                 }
               }
             }
@@ -154,17 +136,20 @@ function buildQuery(options) {
         },
         entities: {
           "nested" : {
-            "path" : "entities"
+            "path" : "entities_count"
           },
           aggs: {
-            "occurrences" : {
+            "sum" : {
               terms : {
-                "field": "entities.id",
+                "field": "entities_count.id",
                 "size": 5000
               },
               aggs: {
-                total_count: {
-                  "sum" : { "field" : "entities.count" }
+                occurrences: {
+                  "sum" : { "field" : "entities_count.count" }
+                },
+                count: {
+                  "sum" : { "field" : "entities_count.one" }
                 }
               }
             }
@@ -184,19 +169,19 @@ function getResult(res, options, suggestedEntities) {
   };
   var hits = res.hits;
   result.interviews = _.map(hits.hits, function(record) {
-    var interview = _.omit(record._source, ["subjects", "entities"]);
+    var interview = _.omit(record._source, ["subjects", "entities", "subjects_count", "entities_count"]);
     interview.id = record._id;
     _.each(record.highlight, function(snippets, property) {
       interview[property] = snippets.join('<br>');
     });
     interview.subjects = {};
     var subjectStats = {};
-    _.each(record._source.subjects, function(record) {
+    _.each(record._source.subjects_count, function(record) {
       subjectStats[record.id] = record.count;
     });
     interview.entities = {};
     var entityStats = {};
-    _.each(record._source.entities, function(record) {
+    _.each(record._source.entities_count, function(record) {
       entityStats[record.id] = record.count;
     });
     if (options.filters) {
@@ -211,6 +196,7 @@ function getResult(res, options, suggestedEntities) {
         });
       }
     }
+
     interview.suggestedEntities = {};
     _.each(suggestedEntities.hits.hits, function(record) {
       var id = record._id;
@@ -229,8 +215,11 @@ function getResult(res, options, suggestedEntities) {
   _.each(["subjects"], function(facet) {
     var stats = {};
     var agg = res.aggregations[facet];
-    _.each(agg.occurrences.buckets, function(bucket) {
-      stats[bucket.key] = bucket.total_count.value;
+    _.each(agg.sum.buckets, function(bucket) {
+      stats[bucket.key] = {
+        count: bucket.count.value,
+        occurrences: bucket.occurrences.value
+      };
     });
     facets[facet] = stats;
   });
@@ -257,9 +246,9 @@ var searchArticles = function(options, cb) {
       // console.log('###### ENTITIES', JSON.stringify(suggestedEntities, null, 2));
       var client = new elasticsearch.Client(_.clone(config));
       var query = buildQuery(options);
-      // console.log("################################");
-      // console.log(JSON.stringify(query, null, 2));
-      // console.log("################################");
+      console.log("################################");
+      console.log(JSON.stringify(query, null, 2));
+      console.log("################################");
       client.search(query, function(err, res) {
         client.close();
         if (err) {
@@ -267,6 +256,7 @@ var searchArticles = function(options, cb) {
         } else {
           // console.log(JSON.stringify(res, null, 2));
           var result = getResult(res, options, suggestedEntities);
+          // var result = getResult(res, options, []);
           cb(null, result);
         }
       });
