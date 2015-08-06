@@ -26,14 +26,11 @@ function step(cb) {
     console.log('Indexing interview %s...', url);
     var interview = new Interview.fromJson(json);
     var client = new elasticsearch.Client(_.clone(config));
-    indexInterview(client, interview).then(function() {
+    indexInterview(client, interview, function(err) {
       client.close();
+      if (err) return cb(err);
       count++;
       step(cb);
-    }).error(function(error) {
-      console.error(error);
-      client.close();
-      cb(error);
     });
   });
 }

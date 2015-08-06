@@ -1,7 +1,7 @@
 var elasticsearch = require('elasticsearch');
 var config = require('../config');
 var _ = require('underscore');
-var getJSON = require('./get_json');
+var getExtendedSubjects = require('./get_extended_subjects');
 
 function buildQuery(options) {
   function _facetFilter(facet, values) {
@@ -180,34 +180,11 @@ function buildQuery(options) {
   return query;
 }
 
-
-function expandSubjectIds(ids, cb) {
-  if (!ids || ids.length === 0) {
-    cb(null, []);
-  }
-  var idx = 0;
-  var result = [];
-  function step(cb) {
-    if (idx >=ids.length) {
-      result = _.uniq(result);
-      cb(null, result);
-      return;
-    }
-    var subjectId = ids[idx++];
-    getJSON(config.archive + '/api/subjects/children/'+subjectId, function(err, ids) {
-      if (err) return cb(err);
-      result = result.concat(ids);
-      step(cb);
-    });
-  }
-  step(cb);
-}
-
 var searchArticles = function(options, cb) {
   options.filters = options.filters || {};
-  options.extendedFilters = _.clone(options.filters);
-  expandSubjectIds(options.filters.subjects, function(err, extendedSubjects) {
+  getExtendedSubjects("children", options.filters.subjects, function(err, extendedSubjects) {
     if (err) return cb(err);
+    options.extendedFilters = _.clone(options.filters);
     options.extendedFilters.subjects = extendedSubjects;
 
     var client = new elasticsearch.Client(_.clone(config));

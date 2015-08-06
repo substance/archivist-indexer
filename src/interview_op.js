@@ -46,15 +46,14 @@ var updateIndex = function(id, cb) {
       if (err) return cb(err);
       console.log('Indexing interview %s...', interviewUrl);
       var interview = new Interview.fromJson(json);
-
-      indexInterview(client, interview).then(function() {
-        console.log("Done.");
+      indexInterview(client, interview, function(err) {
+        if (err) {
+          console.error(err);
+        } else {
+          console.log('Done.');
+        }
         client.close();
-        cb(null);
-      }).error(function(error, resp) {
-        console.error(error);
-        client.close();
-        cb(error);
+        cb(err);
       });
     });
   });

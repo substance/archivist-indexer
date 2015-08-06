@@ -1,32 +1,29 @@
 var cheerio = require('cheerio');
 var _ = require('underscore');
 global.$ = cheerio.load('', {decodeEntities: false});
+var getSubjectTree = require('./get_subject_tree');
 
-module.exports = function getIndexingCommands(interview) {
-
-  var content = interview.get('content');
-  var nodeIds = content.nodes;
-  var interviewId = interview.id;
-
-  var documentNode = interview.get('document');
-  var htmlExporter = new interview.constructor.HtmlExporter({
-    skipTypes: {
-      'timecode': true
-    },
-    exportAnnotationFragments: true,
-    containerId: 'content'
-  });
-  htmlExporter.initialize(interview);
-
-  // record all entries and call ES later, so that we only index if everything goes well
-  var indexEntries = [];
+function _indexMeta(interview, commands, subjectTree) {
+  // calculate stats for subjects
   var subjectStats = {};
-  var entityStats = {};
-
+  function _updateCounter(id) {
+    if (!subjectStats[id]) {
+      subjectStats[id] = 1;
+    } else {
+      subjectStats[id]++;
+    }
+  }
+  function _countSubject(id) {
+    var node = subjectTree.get(id);
+    while(node) {
+      _updateCounter(node.id);
+      node = subjectTree.getParent(node.id);
+    }
+  }
   var subjectRefs = interview.getIndex('type').get('subject_reference');
   _.each(subjectRefs, function(ref) {
     _.each(ref.target, function(id) {
-      subjectStats[id] = (subjectStats[id] || 0) + 1;
+      _countSubject(id);
     });
   });
   subjectStats = _.map(subjectStats, function(count, id) {
@@ -35,7 +32,8 @@ module.exports = function getIndexingCommands(interview) {
       count: count
     };
   });
-
+  // calculate stats for entities
+  var entityStats = {};
   var entityRefs = interview.getIndex('type').get('entity_reference');
   _.each(entityRefs, function(ref) {
     var id = ref.target;
@@ -48,7 +46,13 @@ module.exports = function getIndexingCommands(interview) {
     };
   });
 
-  var shortData = {
+  var documentNode = interview.get('document');
+  var command = { "index" : {
+    _index: 'interviews',
+    _type: 'interview',
+    _id: interview.id,
+  }};
+  var data = {
     "summary": documentNode.short_summary,
     "summary_en": documentNode.short_summary_en,
     "title": documentNode.title,
@@ -56,20 +60,31 @@ module.exports = function getIndexingCommands(interview) {
     "subjects": subjectStats,
     "entities": entityStats,
   };
-  var shortEntry = { "index" : {
-    _index: 'interviews',
-    _type: 'interview',
-    _id: interviewId,
-  }};
-  indexEntries.push(shortEntry);
-  indexEntries.push(shortData);
+  commands.push(command);
+  commands.push(data);
+}
 
+function indexMeta(interview, commands, cb) {
+  getSubjectTree(function(err, subjectTree) {
+    if (err) return cb(err);
+    _indexMeta(interview, commands, subjectTree);
+    cb(null);
+  });
+}
 
+function indexFragments(interview, commands, cb) {
+  var htmlExporter = new interview.constructor.HtmlExporter({
+    skipTypes: {
+      'timecode': true
+    },
+    exportAnnotationFragments: true,
+    containerId: 'content'
+  });
+  htmlExporter.initialize(interview);
 
-  // console.log("#################");
-  // console.log("Short Entry:");
-  // console.log(shortEntry);
-  // console.log("#################");
+  var content = interview.get('content');
+  var nodeIds = content.nodes;
+
   nodeIds.forEach(function(nodeId, pos) {
     var node = interview.get(nodeId);
     if (!node) {
@@ -104,22 +119,48 @@ module.exports = function getIndexingCommands(interview) {
     subjectFacets = _.uniq(subjectFacets);
 
     var entryId = nodeId;
-    var nodeEntry = { "index" : {
+    var command = { "index" : {
       _index: 'interviews',
       _type: 'fragment',
-      _parent: interviewId,
+      _parent: interview.id,
       _id: entryId,
     }};
-    indexEntries.push(nodeEntry);
-    indexEntries.push({
-        id: nodeId,
-        type: type,
-        content: nodeHtml,
-        position: pos,
-        subjects: subjectFacets,
-        entities: entityFacets
-      });
+    var data = {
+      id: nodeId,
+      type: type,
+      content: nodeHtml,
+      position: pos,
+      subjects: subjectFacets,
+      entities: entityFacets
+    };
+    commands.push(command);
+    commands.push(data);
   });
 
-  return indexEntries;
+  cb(null);
+}
+
+/**
+ * @param interview Interview instance
+ * @param mode Use 'meta' if you want to update the meta data ('interview' type) only.
+ * @return an array of commands that can be used with `client.bulk()`
+ */
+module.exports = function getIndexingCommands(interview, mode, cb) {
+  if (arguments.length === 2) {
+    cb = arguments[1];
+    mode = "all";
+  }
+  var commands = [];
+  function _finally(err) {
+    if (err) return cb(err);
+    cb(null, commands);
+  }
+  if (mode === "meta") {
+    indexMeta(interview, commands, _finally);
+  } else {
+    indexMeta(interview, commands, function(err) {
+      if (err) return cb(err);
+      indexFragments(interview, commands, _finally);
+    });
+  }
 };

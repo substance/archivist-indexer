@@ -1,9 +1,11 @@
 var getIndexingCommands = require('./get_indexing_commands');
 
-function indexInterview(client, interview) {
-  var indexEntries = getIndexingCommands(interview);
-  return client.bulk({
-    body: indexEntries
+function indexInterview(client, interview, cb) {
+  getIndexingCommands(interview, function(err, commands) {
+    if (err) return console.error(err);
+    client.bulk({
+      body: commands
+    }, cb);
   });
 }
 
