@@ -6,7 +6,7 @@ var app = express();
 var queries = require('./src/queries');
 var index = require('./src/interview_op');
 
-app.set('port', (process.env.PORT || 4002))
+app.set('port', (process.env.PORT || 4002));
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -18,11 +18,13 @@ app.use(function(req, res, next) {
 
 app.get('/search', function (req, res) {
   var query = {
-    searchString: ""
-    filters = {};
-  }
-  if(req.query) {
-    query = JSON.parse(req.query);
+    searchString: "",
+    filters: {}
+  };
+
+  console.log('############ QUERY', req.query);
+  if(req.query.searchQuery) {
+    query = JSON.parse(req.query.searchQuery);
     if (query.searchStr) {
       query.searchString = query.searchStr;
     }
@@ -39,9 +41,9 @@ app.get('/search', function (req, res) {
 app.get('/search/document/', function (req, res) {
   var query = {
     documentId: req.query.documentId,
-    searchString: ""
-    filters = {};
-  }
+    searchString: "",
+    filters: {}
+  };
   if(req.query) {
     query = JSON.parse(req.query);
     if (query.searchStr) {
@@ -67,7 +69,7 @@ app.get('/update/document/:id', function (req, res) {
     } else {
       res.status(200).send('done');
     }
-  })
+  });
 });
 
 // Remove index for document
@@ -80,7 +82,7 @@ app.get('/remove/document/:id', function (req, res) {
     } else {
       res.status(200).send('done');
     }
-  })
+  });
 });
 
 // Count subject frequency
