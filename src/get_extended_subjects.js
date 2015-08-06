@@ -4,7 +4,7 @@ var _ = require('underscore');
 
 function getExtendedSubjects(mode, ids, cb) {
   if (!ids || ids.length === 0) {
-    cb(null, []);
+    return cb(null, []);
   }
   var idx = 0;
   var result = ids.slice(0);
