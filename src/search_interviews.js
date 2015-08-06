@@ -213,8 +213,9 @@ function getResult(res, options) {
     return interview;
   });
   var facets = {};
-  _.each(res.aggregations, function(agg, facet) {
+  _.each(["subjects"], function(facet) {
     var stats = {};
+    var agg = res.aggregations[facet];
     _.each(agg.occurrences.buckets, function(bucket) {
       stats[bucket.key] = bucket.total_count.value;
     });
@@ -226,6 +227,8 @@ function getResult(res, options) {
 }
 
 var searchArticles = function(options, cb) {
+  options.searchString = options.searchString || options.searchStr;
+  delete options.searchStr;
   console.log('### QUERY OPTIONS:', JSON.stringify(options, null, 2));
   options.filters = options.filters || {};
   getExtendedSubjects("children", options.filters.subjects, function(err, extendedSubjects) {
