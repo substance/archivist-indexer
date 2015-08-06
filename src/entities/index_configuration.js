@@ -1,14 +1,9 @@
 module.exports = {
-  'index': 'interviews',
+  'index': 'entities',
   'body': {
     "settings": {
       "analysis": {
         "filter": {
-          "trigrams_filter": {
-            "type": "ngram",
-            "min_gram": 3,
-            "max_gram": 3
-          },
           "stopwords_ru": {
             "type": "stop",
             "stopwords": ["а","без","более","бы","был","была","были","было","быть","в","вам","вас","весь","во","вот", "все", "всего", "всех", "вы", "где", "да", "даже", "для", "до", "его", "ее", "если", "есть", "еще", "же", "за", "здесь", "и", "из", "или", "им", "их", "к", "как", "ко", "когда", "кто", "ли", "либо", "мне", "может", "мы", "на", "надо", "наш", "не", "него", "нее", "нет", "ни", "них", "но", "ну", "о", "об", "однако", "он", "она", "они", "оно", "от", "очень", "по", "под", "при", "с", "со", "так", "также", "такой", "там", "те", "тем", "то", "того", "тоже", "той", "только", "том", "ты", "у", "уже", "хотя", "чего", "чей", "чем", "что", "чтобы", "чье", "чья", "эта", "эти", "это", "я"],
@@ -71,51 +66,25 @@ module.exports = {
               "russian_stemmer"
             ]
           }
-        },
-        "tokenizer": {
-          "nGram": {
-            "type": "nGram",
-            "min_gram": 4,
-            "max_gram": 20
-          }
         }
       }
     },
     "mappings": {
-      "interview": {
+      "entity": {
        "properties": {
-         // interview short summary
-         "short_summary": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian" },
-         "short_summary_en": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_en", "search_analyzer": 'snowball', "language": "English" },
-         // title (interviewee name) for exact full-text search (no partial matches)
-         "title": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru" },
-         // The rest are facets which are used for strict match queries or filtering only
-         "published_on": { "type": "string", "index" : "not_analyzed"},
-         "subjects": {
-            "type": "nested",
-            "properties": {
-              "id": { "type": "string", "index": "not_analyzed" },
-              "count": { "type": "integer" }
-            }
-          },
-         "entities": {
-            "type": "nested",
-            "properties": {
-              "id": { "type": "string", "index": "not_analyzed" },
-              "count": { "type": "integer" }
-            }
-          }
-       }
-      },
-      "fragment": {
-        "_parent": {"type": "interview"},
-        "properties": {
-          "id": { "type": "string", "index" : "not_analyzed" },
-          "type": { "type": "string", "index" : "not_analyzed" },
-          "content": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian",  "term_vector": "with_positions_offsets" },
-          "position": { "type": "integer", "index": "not_analyzed" },
-          "entities": { "type": "string", "index": "not_analyzed" },
-          "subjects": {"type" : "string", "index": "not_analyzed"}
+          "createdAt": {"type": "date", "index": "not_analyzed"},
+          "updatedAt": {"type": "date", "index": "not_analyzed"},
+          "country": {"type": "string", "index": "not_analyzed"},
+          "nearest_locality": {"type": "string", "index": "not_analyzed"},
+          "point": {"type" : "geo_point"},
+          "name": { "type": "string", "index": "analyzed", "analyzer": "analyzer_ru" },
+          "current_name": {"type": "string", "index": "not_analyzed"},
+          "description": { "type": "string", "index" : "analyzed", "analyzer": "analyzer_ru", "search_analyzer": 'snowball', "language": "Russian" },
+          "type": {"type": "string", "index": "not_analyzed"},
+          "prison_type": {"type": "string", "index" :"not_analyzed"},
+          "synonyms": { "type": "string", "index": "analyzed", "analyzer": "analyzer_ru" },
+          "entity_type": {"type": "string", "index": "not_analyzed"},
+          "definition_type": {"type": "string", "index": "not_analyzed"}
         }
       }
     }
