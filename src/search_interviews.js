@@ -51,13 +51,13 @@ function buildQuery(options) {
     if (searchString) {
       should.push({ "match": { "content": { "query": searchString, "minimum_should_match": "75%" } } });
     }
-    _.each(filters, function(filterValues, facet) {
-      _.each(filterValues, function(value) {
-        var matchTerm = { "term": { } };
-        matchTerm.term[facet] = value;
-        should.push(matchTerm);
-      });
-    });
+    // _.each(filters, function(filterValues, facet) {
+    //   _.each(filterValues, function(value) {
+    //     var matchTerm = { "term": { } };
+    //     matchTerm.term[facet] = value;
+    //     should.push(matchTerm);
+    //   });
+    // });
     return query;
   }
 
@@ -179,7 +179,8 @@ function buildQuery(options) {
 }
 
 function getResult(res) {
-  var result = {};
+  var result = {
+  };
   var hits = res.hits;
   result.interviews = _.map(hits.hits, function(record) {
     return {
@@ -197,6 +198,7 @@ function getResult(res) {
     facets[facet] = stats;
   });
   result.facets = facets;
+  result.count = hits.hits.length;
   return result;
 };
 

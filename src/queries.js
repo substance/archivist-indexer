@@ -14,7 +14,8 @@ queries.findDocumentsWithContent = function(query, cb) {
     async.each(result.interviews, function(record, cb) {
       queries.getDocumentPreview({
         documentId: record.id,
-        searchString: query.searchString
+        searchString: query.searchString,
+        filters: query.filters
       }, function(err, docPreview) {
         if (err) return cb(err);
         record.fragments = docPreview.fragments;
@@ -66,7 +67,7 @@ queries.getDocumentPreview = function(query, cb) {
   queries.getDocumentMetaById(documentId)
   .then(function(data) {
     _documentMeta = data._source;
-    return queries.findDocumentFragmentsWithContent(documentId, searchString, from, size, type);
+    return queries.findDocumentFragmentsWithContent(documentId, searchString, query.filters, from, size, type);
   })
   .then(function(data) {
     _fragments = [];
@@ -94,9 +95,23 @@ queries.getDocumentPreview = function(query, cb) {
   });
 };
 
-queries.findDocumentFragmentsWithContent = function(documentId, searchString, from, size, type) {
-  // console.log("Asking for fragment in %s containing %s", documentId, searchString);
+function _matchFragment(searchString, terms) {
+  var should = [];
+  if (searchString) {
+    should.push({ "match": { "content": { "query": searchString, "minimum_should_match": "75%" } } });
+  }
+  _.each(terms, function(termValues, facet) {
+    _.each(termValues, function(value) {
+      var matchTerm = { "term": { } };
+      matchTerm.term[facet] = value;
+      should.push(matchTerm);
+    });
+  });
+  return should;
+}
 
+queries.findDocumentFragmentsWithContent = function(documentId, searchString, terms, from, size, type) {
+  // console.log("Asking for fragment in %s containing %s", documentId, searchString);
   var client = new elasticsearch.Client(_.clone(config));
   return client.search({
     index: 'interviews',
@@ -108,8 +123,8 @@ queries.findDocumentFragmentsWithContent = function(documentId, searchString, fr
         "bool": {
           "must": [
             { "term":  { "_parent": documentId } },
-            { "match": { "content": { "query": searchString, "type": type, "minimum_should_match": "75%" } } }
-          ]
+          ],
+          "should": _matchFragment(searchString, terms),
         }
       },
       "highlight": {
