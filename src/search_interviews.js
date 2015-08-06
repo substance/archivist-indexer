@@ -178,16 +178,39 @@ function buildQuery(options) {
   return query;
 }
 
-function getResult(res) {
+function getResult(res, options) {
   var result = {
   };
   var hits = res.hits;
   result.interviews = _.map(hits.hits, function(record) {
-    return {
-      id: record._id,
-      score: record._score,
-      highlight: record.highlight
+    var interview = _.omit(record._source, ["subjects", "entities"]);
+    interview.id = record._id;
+    _.each(record.highlight, function(snippets, property) {
+      interview[property] = snippets.join('<br>');
+    });
+    interview.subjects = {};
+    interview.entities = {};
+    if (options.filters) {
+      if (options.filters.subjects) {
+        var subjectStats = {};
+        _.each(record._source.subjects, function(record) {
+          subjectStats[record.id] = record.count;
+        });
+        _.each(options.filters.subjects, function(id) {
+          interview.subjects[id] = subjectStats[id];
+        });
+      }
+      if (options.filters.entities) {
+        var entityStats = {};
+        _.each(record._source.entities, function(record) {
+          entityStats[record.id] = record.count;
+        });
+        _.each(options.filters.entities, function(id) {
+          interview.entities[id] = entityStats[id];
+        });
+      }
     }
+    return interview;
   });
   var facets = {};
   _.each(res.aggregations, function(agg, facet) {
@@ -200,7 +223,7 @@ function getResult(res) {
   result.facets = facets;
   result.count = hits.hits.length;
   return result;
-};
+}
 
 var searchArticles = function(options, cb) {
   console.log('### QUERY OPTIONS:', JSON.stringify(options, null, 2));
@@ -223,7 +246,7 @@ var searchArticles = function(options, cb) {
         cb(err);
       } else {
         // console.log(JSON.stringify(res, null, 2));
-        var result = getResult(res);
+        var result = getResult(res, options);
         cb(null, result);
       }
     });
