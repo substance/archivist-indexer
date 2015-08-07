@@ -54,40 +54,46 @@ queries.getDocumentPreview = function(query, cb) {
   // - TODO: all figures
   // - TODO: document meta data
 
-  var _documentMeta;
-  var _fragments;
-
-  function createDocumentPreview() {
+  function createDocumentPreview(documentMeta, fragments) {
     var result = {};
-    result.document = _documentMeta;
-    result.fragments = _fragments || [];
+    result.document = documentMeta;
+    result.fragments = fragments || [];
     cb(null, result);
   }
+
+  var _documentMeta;
 
   queries.getDocumentMetaById(documentId)
   .then(function(data) {
     _documentMeta = data._source;
-    return queries.findDocumentFragmentsWithContent(documentId, searchString, query.filters, from, size, type);
+    // Note: we do not get fragments for filters right now.
+    // TODO: if we want to create a detailed preview we should add them
+    // var filters = query.filters;
+    var filters = null;
+    return queries.findDocumentFragmentsWithContent(documentId, searchString, filters, from, size, type, 0.5);
   })
   .then(function(data) {
-    _fragments = [];
-    var fragments = data.hits.hits;
-    fragments.sort(function(a, b) {
-      return a._source.position - b._source.position;
-    });
-    for (var i = 0; i < fragments.length; i++) {
-      var fragmentData = fragments[i];
-      var fragmentResult = fragments[i]._source;
-      if (fragmentData.highlight) {
-        for (var key in fragmentData.highlight) {
-          var highlightedContent = fragmentData.highlight[key].join('');
-          // console.log("Replacing:\n\t%s\n  with:\n\t%s", fragmentResult[key], highlightedContent);
-          fragmentResult[key] = highlightedContent;
+    var _fragments = [];
+    if (data) {
+      var fragments = data.hits.hits;
+      // console.log(fragments);
+      fragments.sort(function(a, b) {
+        return a._source.position - b._source.position;
+      });
+      for (var i = 0; i < fragments.length; i++) {
+        var fragmentData = fragments[i];
+        var fragmentResult = fragments[i]._source;
+        if (fragmentData.highlight) {
+          for (var key in fragmentData.highlight) {
+            var highlightedContent = fragmentData.highlight[key].join('');
+            // console.log("Replacing:\n\t%s\n  with:\n\t%s", fragmentResult[key], highlightedContent);
+            fragmentResult[key] = highlightedContent;
+          }
         }
+        _fragments.push(fragmentResult);
       }
-      _fragments.push(fragmentResult);
     }
-    createDocumentPreview();
+    createDocumentPreview(_documentMeta, _fragments);
   })
   .error(function(error) {
     console.error("Urg", error);
@@ -110,35 +116,40 @@ function _matchFragment(searchString, terms) {
   return should;
 }
 
-queries.findDocumentFragmentsWithContent = function(documentId, searchString, terms, from, size, type) {
+queries.findDocumentFragmentsWithContent = function(documentId, searchString, terms, from, size, type, minScore) {
   // console.log("Asking for fragment in %s containing %s", documentId, searchString);
   var client = new elasticsearch.Client(_.clone(config));
-  return client.search({
-    index: 'interviews',
-    type: 'fragment',
-    body: {
-      "size": size,
-      "from": from,
-      "query": {
-        "bool": {
-          "must": [
-            { "term":  { "_parent": documentId } },
-          ],
-          "should": _matchFragment(searchString, terms),
-        }
-      },
-      "highlight": {
-        "pre_tags" : ['<span class="query-string">'], "post_tags" : ["</span>"],
-        "fields": {
-          // NOTE: "number_of_fragments" : 0 is necessary to suppress lucene's automatic truncation of fragments
-          "content": { "number_of_fragments" : 0 }
+  if (terms || searchString) {
+    return client.search({
+      index: 'interviews',
+      type: 'fragment',
+      body: {
+        "size": size,
+        "from": from,
+        "min_score": minScore,
+        "query": {
+          "bool": {
+            "must": [
+              { "term":  { "_parent": documentId } },
+            ],
+            "should": _matchFragment(searchString, terms),
+          }
+        },
+        "highlight": {
+          "pre_tags" : ['<span class="query-string">'], "post_tags" : ["</span>"],
+          "fields": {
+            // NOTE: "number_of_fragments" : 0 is necessary to suppress lucene's automatic truncation of fragments
+            "content": { "number_of_fragments" : 0 }
+          }
         }
       }
-    }
-  }).then(function(data) {
-    client.close();
-    return data;
-  });
+    }).then(function(data) {
+      client.close();
+      return data;
+    });
+  } else {
+    return null;
+  }
 };
 
 queries.countSubjects = function(cb) {
