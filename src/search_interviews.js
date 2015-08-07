@@ -198,23 +198,10 @@ function getResult(res, options, suggestedEntities) {
       }
     }
     interview.facets = facets;
-
-    interview.suggestedEntities = {};
-    _.each(suggestedEntities.hits.hits, function(record) {
-      var id = record._id;
-      if (entityStats[id]) {
-        var entity = {
-          name: record._source.name,
-          entity_type: record._source.entity_type,
-          // description: record._source.description
-        };
-        interview.suggestedEntities[id] = entity;
-      }
-    });
     return interview;
   });
   var facets = {};
-  _.each(["subjects"], function(facet) {
+  _.each(["subjects", "entities"], function(facet) {
     var stats = {};
     var agg = res.aggregations[facet];
     _.each(agg.sum.buckets, function(bucket) {
@@ -227,6 +214,21 @@ function getResult(res, options, suggestedEntities) {
   });
   result.facets = facets;
   result.count = hits.hits.length;
+
+  result.suggestedEntities = {};
+  _.each(suggestedEntities.hits.hits, function(record) {
+    var id = record._id;
+    var entity = {
+      name: record._source.name,
+      entity_type: record._source.entity_type,
+      count: facets.entities[id].count,
+      // description: record._source.description
+    };
+    result.suggestedEntities[id] = entity;
+  });
+  // don't need to transfer global stats for entities
+  delete facets.entities;
+
   return result;
 }
 
