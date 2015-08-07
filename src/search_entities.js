@@ -52,9 +52,9 @@ var searchEntities = function(options, cb) {
   var client = new elasticsearch.Client(_.clone(config));
   var query = buildQuery(options);
 
-  console.log("################################");
-  console.log(JSON.stringify(query, null, 2));
-  console.log("################################");
+  // console.log("################################");
+  // console.log(JSON.stringify(query, null, 2));
+  // console.log("################################");
 
   client.search(query).then(function(body) {
     client.close();

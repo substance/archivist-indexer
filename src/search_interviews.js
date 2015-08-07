@@ -248,9 +248,9 @@ var searchArticles = function(options, cb) {
       // console.log('###### ENTITIES', JSON.stringify(suggestedEntities, null, 2));
       var client = new elasticsearch.Client(_.clone(config));
       var query = buildQuery(options);
-      console.log("################################");
-      console.log(JSON.stringify(query, null, 2));
-      console.log("################################");
+      // console.log("################################");
+      // console.log(JSON.stringify(query, null, 2));
+      // console.log("################################");
       client.search(query, function(err, res) {
         client.close();
         if (err) {
